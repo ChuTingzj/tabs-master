@@ -40,7 +40,8 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     if (e.key === 'Escape') {
       onCloseGroupComponent()
     }
-    if (e.key === 'z' && e.metaKey && e.shiftKey) {
+    //监听用户按下command + ctrl + z键，然后打开组件
+    if (e.key === 'z' && e.metaKey && e.ctrlKey) {
       onOpenGroupComponent()
     }
   })
