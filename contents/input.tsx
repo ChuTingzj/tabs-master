@@ -17,6 +17,7 @@ import { sendToBackgroundViaRelay } from "@plasmohq/messaging"
 import {cloneDeep} from 'lodash-es'
 import { TweenOneGroup } from 'rc-tween-one'
 import tailWindCssText from "data-text:~style.css"
+import { useSet } from 'ahooks';
 
 const HOST_ID = "engage-csui-input"
 const ALERT_MESSAGE_QUICK_GROUP = '根据标签的title进行快速分组，分组名称将默认采用标签的title，已经分组的tab则不会进行重新分组'
@@ -78,20 +79,28 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   const [inputValue, setInputValue] = useState('');
   const [inputVisible, setInputVisible] = useState(false);
   const inputRef = useRef<InputRef>(null);
-  const [targetKeys, setTargetKeys] = useState<TransferProps['targetKeys']>([]);
   const [selectedKeys, setSelectedKeys] = useState<TransferProps['targetKeys']>([]);
+  const [transferedKeysSet, { add, remove, reset }] = useSet(['Hello']);
   const [form] = Form.useForm<FieldType>();
 
   const groupTypeAlertInfo = Form.useWatch((values)=>values.groupType==='quick_group'?ALERT_MESSAGE_QUICK_GROUP:ALERT_MESSAGE_CUSTOM_GROUP, form);
   const isCustomGroup = Form.useWatch((values)=>values.groupType==='custom_group', form);
-  const transferDataSource = useMemo(()=>tabs.map(tab=>({key:tab.tabId,title:tab.title,description:tab.title})),[tabs])
+  const transferDataSource = useMemo(()=>tabs.filter(tab=>!tab.groupId).map(tab=>({key:tab.tabId,title:tab.title,description:tab.title})),[tabs,transferedKeysSet])
+  const transferTags = useMemo(()=>{
+    return tags.map(tag=>{
+      const targetKeys = {value:[]}
+      const onChange: TransferProps['onChange'] = (nextTargetKeys, direction, moveKeys) => {
+        console.log('targetKeys:', nextTargetKeys);
+        console.log('direction:', direction);
+        console.log('moveKeys:', moveKeys);
+        nextTargetKeys.forEach(key=>add(key.toString()))
+        targetKeys.value = nextTargetKeys
+      };
+      return {title:tag,targetKeys,onChange}
+    })
+  },[tags])
 
-  const onChange: TransferProps['onChange'] = (nextTargetKeys, direction, moveKeys) => {
-    console.log('targetKeys:', nextTargetKeys);
-    console.log('direction:', direction);
-    console.log('moveKeys:', moveKeys);
-    setTargetKeys(nextTargetKeys);
-  };
+  
   const onSelectChange: TransferProps['onSelectChange'] = (
     sourceSelectedKeys,
     targetSelectedKeys,
@@ -216,33 +225,17 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
           )}
         </>
     }
-    /**
-     * 'sm': '640px',
-      // => @media (min-width: 640px) { ... }
-
-      'md': '768px',
-      // => @media (min-width: 768px) { ... }
-
-      'lg': '1024px',
-      // => @media (min-width: 1024px) { ... }
-
-      'xl': '1280px',
-      // => @media (min-width: 1280px) { ... }
-
-      '2xl': '1536px',
-      // => @media (min-width: 1536px) { ... }
-     */
     if(current === 1){
       return <div className="plasmo-grid xl:plasmo-grid-cols-1 2xl:plasmo-grid-cols-2 plasmo-gap-6" style={{maxHeight:'27vh',overflowY:'auto',overflowX:'hidden'}}>
         {
-          tags.map(tag=>{
+          transferTags.map(tag=>{
             return <Transfer
-                    key={tag}
+                    key={tag.title}
                     dataSource={transferDataSource}
-                    titles={['Tabs', `${tag}`]}
-                    // targetKeys={targetKeys}
+                    titles={['Tabs', `${tag.title}`]}
+                    targetKeys={tag.targetKeys.value}
                     selectedKeys={selectedKeys}
-                    // onChange={onChange}
+                    onChange={tag.onChange}
                     onSelectChange={onSelectChange}
                     render={(item) => item.title}
                   />
@@ -336,14 +329,11 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
           </Modal>
           {visible &&  <Sender
             value={value}
-            actions={<div></div>}
-            prefix={
-              <Button
-                onClick={onOpenTabGroupModal}
-                type="text"
-                icon={<SettingOutlined style={{color:'pink',fontSize:'22px'}} />}
-              />
-            }
+            actions={<Button
+              onClick={onOpenTabGroupModal}
+              type="text"
+              icon={<SettingOutlined style={{color:'pink'}} />}
+            />}
             onChange={(nextVal) => {
               setValue(nextVal);
             }}
