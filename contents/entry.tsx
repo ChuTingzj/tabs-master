@@ -4,7 +4,6 @@ import type {
   PlasmoGetShadowHostId } from "plasmo"
 import { FloatButton,Tooltip } from 'antd';
 import type {FC} from 'react'
-import {useEffect} from 'react'
 import {LoveIcon} from '../icon/heart'
 import {TabIcon} from '../icon/tab'
 import { ThemeProvider } from "~theme"

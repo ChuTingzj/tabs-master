@@ -17,6 +17,9 @@ dependencies:
   '@plasmohq/messaging':
     specifier: 0.6.2
     version: 0.6.2(react@18.2.0)
+  ahooks:
+    specifier: 3.8.4
+    version: 3.8.4(react@18.2.0)
   antd:
     specifier: 5.22.5
     version: 5.22.5(react-dom@18.2.0)(react@18.2.0)
@@ -3192,6 +3195,24 @@ packages:
     hasBin: true
     dev: false
 
+  /ahooks@3.8.4(react@18.2.0):
+    resolution: {integrity: sha1-7ioi1Stu5XdDofarUckafDa818Y=, tarball: http://r.npm.sankuai.com/ahooks/download/ahooks-3.8.4.tgz}
+    engines: {node: '>=8.0.0'}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      '@babel/runtime': 7.26.0
+      dayjs: 1.11.13
+      intersection-observer: 0.12.2
+      js-cookie: 3.0.5
+      lodash: 4.17.21
+      react: 18.2.0
+      react-fast-compare: 3.2.2
+      resize-observer-polyfill: 1.5.1
+      screenfull: 5.2.0
+      tslib: 2.8.1
+    dev: false
+
   /ansi-escapes@4.3.2:
     resolution: {integrity: sha1-ayKR0dt9mLZSHV8e+kLQ86n+tl4=, tarball: http://r.npm.sankuai.com/ansi-escapes/download/ansi-escapes-4.3.2.tgz}
     engines: {node: '>=8'}
@@ -4451,6 +4472,10 @@ packages:
       wrap-ansi: 6.2.0
     dev: false
 
+  /intersection-observer@0.12.2:
+    resolution: {integrity: sha1-SkU0nMDNkZFmgrH0TCjX7HN9w3U=, tarball: http://r.npm.sankuai.com/intersection-observer/download/intersection-observer-0.12.2.tgz}
+    dev: false
+
   /is-arrayish@0.2.1:
     resolution: {integrity: sha1-d8mYQFJ6qOyxqLppe4BkWnqSap0=, tarball: http://r.npm.sankuai.com/is-arrayish/download/is-arrayish-0.2.1.tgz}
     dev: false
@@ -4557,6 +4582,11 @@ packages:
   /joycon@3.1.1:
     resolution: {integrity: sha1-vOhZbWroCPi2gWj1/GkoCZaJTwM=, tarball: http://r.npm.sankuai.com/joycon/download/joycon-3.1.1.tgz}
     engines: {node: '>=10'}
+    dev: false
+
+  /js-cookie@3.0.5:
+    resolution: {integrity: sha1-C34v0MAVUsWLqG4IQflNwlV9zbw=, tarball: http://r.npm.sankuai.com/js-cookie/download/js-cookie-3.0.5.tgz}
+    engines: {node: '>=14'}
     dev: false
 
   /js-tokens@4.0.0:
@@ -6130,6 +6160,10 @@ packages:
     resolution: {integrity: sha1-PHQwEMk1lgjDdezWvHbzXZOZWwo=, tarball: http://r.npm.sankuai.com/react-error-overlay/download/react-error-overlay-6.0.9.tgz}
     dev: false
 
+  /react-fast-compare@3.2.2:
+    resolution: {integrity: sha1-kpqXpTIwTOn+5LyuRCNPHOLCHUk=, tarball: http://r.npm.sankuai.com/react-fast-compare/download/react-fast-compare-3.2.2.tgz}
+    dev: false
+
   /react-is@18.3.1:
     resolution: {integrity: sha1-6DVX3BLq5jqZ4AOkY4ix3LtE234=, tarball: http://r.npm.sankuai.com/react-is/download/react-is-18.3.1.tgz}
     dev: false
@@ -6300,6 +6334,11 @@ packages:
     resolution: {integrity: sha1-QUumSjsoKJLpRM8hCOzAeNEVzcM=, tarball: http://r.npm.sankuai.com/scheduler/download/scheduler-0.23.2.tgz}
     dependencies:
       loose-envify: 1.4.0
+    dev: false
+
+  /screenfull@5.2.0:
+    resolution: {integrity: sha1-ZTPVJNMGIfwSg7lpIUbz8TqT0bo=, tarball: http://r.npm.sankuai.com/screenfull/download/screenfull-5.2.0.tgz}
+    engines: {node: '>=0.10.0'}
     dev: false
 
   /scroll-into-view-if-needed@3.1.0:

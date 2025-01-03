@@ -5,8 +5,8 @@ import type {
 } from "plasmo"
 import { Sender, Suggestion } from '@ant-design/x';
 import {SettingOutlined,SendOutlined,PlusOutlined} from '@ant-design/icons'
-import {Button,Modal,List,Avatar,Tag,Form,Radio,Alert,Flex,Steps,Input,Transfer} from 'antd'
-import type {GetProp,InputRef,TransferProps} from 'antd'
+import {Button,Modal,List,Avatar,Tag,Form,Radio,Alert,Flex,Steps,Input,Tree} from 'antd'
+import type {GetProp,InputRef,TreeProps,TreeDataNode} from 'antd'
 import {useState,useEffect,useMemo,useRef} from 'react'
 import type {FC} from 'react'
 import styleText from 'data-text:./input.less'
@@ -14,10 +14,9 @@ import { ThemeProvider } from "~theme"
 import antdResetCssText from "data-text:antd/dist/reset.css"
 import { StyleProvider } from "@ant-design/cssinjs"
 import { sendToBackgroundViaRelay } from "@plasmohq/messaging"
-import {cloneDeep} from 'lodash-es'
+import {cloneDeep,isEmpty} from 'lodash-es'
 import { TweenOneGroup } from 'rc-tween-one'
 import tailWindCssText from "data-text:~style.css"
-import { useSet } from 'ahooks';
 
 const HOST_ID = "engage-csui-input"
 const ALERT_MESSAGE_QUICK_GROUP = '根据标签的title进行快速分组，分组名称将默认采用标签的title，已经分组的tab则不会进行重新分组'
@@ -78,36 +77,67 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   const [tags, setTags] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [inputVisible, setInputVisible] = useState(false);
+  const [loading,setLoading] = useState(false);
   const inputRef = useRef<InputRef>(null);
-  const [selectedKeys, setSelectedKeys] = useState<TransferProps['targetKeys']>([]);
-  const [transferedKeysSet, { add, remove, reset }] = useSet(['Hello']);
   const [form] = Form.useForm<FieldType>();
 
   const groupTypeAlertInfo = Form.useWatch((values)=>values.groupType==='quick_group'?ALERT_MESSAGE_QUICK_GROUP:ALERT_MESSAGE_CUSTOM_GROUP, form);
   const isCustomGroup = Form.useWatch((values)=>values.groupType==='custom_group', form);
-  const transferDataSource = useMemo(()=>tabs.filter(tab=>!tab.groupId).map(tab=>({key:tab.tabId,title:tab.title,description:tab.title})),[tabs,transferedKeysSet])
-  const transferTags = useMemo(()=>{
-    return tags.map(tag=>{
-      const targetKeys = {value:[]}
-      const onChange: TransferProps['onChange'] = (nextTargetKeys, direction, moveKeys) => {
-        console.log('targetKeys:', nextTargetKeys);
-        console.log('direction:', direction);
-        console.log('moveKeys:', moveKeys);
-        nextTargetKeys.forEach(key=>add(key.toString()))
-        targetKeys.value = nextTargetKeys
-      };
-      return {title:tag,targetKeys,onChange}
-    })
-  },[tags])
 
-  
-  const onSelectChange: TransferProps['onSelectChange'] = (
-    sourceSelectedKeys,
-    targetSelectedKeys,
-  ) => {
-    console.log('sourceSelectedKeys:', sourceSelectedKeys);
-    console.log('targetSelectedKeys:', targetSelectedKeys);
-    setSelectedKeys([...sourceSelectedKeys, ...targetSelectedKeys]);
+  const [gData, setGData] = useState<TreeProps['treeData']>([]);
+  const onDrop: TreeProps['onDrop'] = (info) => {
+    console.log(info);
+    const dropKey = info.node.key;
+    const dragKey = info.dragNode.key;
+    const dropPos = info.node.pos.split('-');
+    const dropPosition = info.dropPosition - Number(dropPos[dropPos.length - 1]); // the drop position relative to the drop node, inside 0, top -1, bottom 1
+
+    const loop = (
+      data: TreeDataNode[],
+      key: React.Key,
+      callback: (node: TreeDataNode, i: number, data: TreeDataNode[]) => void,
+    ) => {
+      for (let i = 0; i < data.length; i++) {
+        if (data[i].key === key) {
+          return callback(data[i], i, data);
+        }
+        if (data[i].children) {
+          loop(data[i].children!, key, callback);
+        }
+      }
+    };
+    const data = [...gData];
+
+    // Find dragObject
+    let dragObj: TreeDataNode;
+    loop(data, dragKey, (item, index, arr) => {
+      arr.splice(index, 1);
+      dragObj = item;
+    });
+
+    if (!info.dropToGap) {
+      // Drop on the content
+      loop(data, dropKey, (item) => {
+        item.children = item.children || [];
+        // where to insert. New item was inserted to the start of the array in this example, but can be anywhere
+        item.children.unshift(dragObj);
+      });
+    } else {
+      let ar: TreeDataNode[] = [];
+      let i: number;
+      loop(data, dropKey, (_item, index, arr) => {
+        ar = arr;
+        i = index;
+      });
+      if (dropPosition === -1) {
+        // Drop on the top of the drop node
+        ar.splice(i!, 0, dragObj!);
+      } else {
+        // Drop on the bottom of the drop node
+        ar.splice(i! + 1, 0, dragObj!);
+      }
+    }
+    setGData(data);
   };
 
   const showInput = () => {
@@ -124,7 +154,6 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   };
   const handleClose = (removedTag: string) => {
     const newTags = tags.filter((tag) => tag !== removedTag);
-    console.log(newTags);
     setTags(newTags);
   };
   const forMap = (tag: string) => (
@@ -142,11 +171,36 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   );
   const tagChild = tags.map(forMap);
   const next = () => {
+    setGData(()=>{
+      return [
+        {
+          title: '分组',
+          children:tags.map(tag=>({
+            title:tag,
+            key:`Group-${tag}`,
+          })),
+          key: 'Group',
+          disabled:true
+        }
+      ].concat({
+        title:'标签页',
+        children:tabs.filter(tab=>!tab.groupId).map(tab=>({
+          title:tab.title,
+          key:`Tab-${tab.tabId}`
+        })),
+        key:'Tab',
+        disabled:true
+      })
+    })
     setCurrent(current + 1);
   };
   const prev = () => {
     setCurrent(current - 1);
   };
+  const onOpenTabGroupModal = () => {
+    setListVisible(false)
+    setModal2Open(true)
+  }
 
   //根据value模糊匹配tabs中子项的title，并将匹配到的子项放到tabs中的第一个
   const filteredTabs = useMemo(()=>{
@@ -173,28 +227,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     return tabs
   },[value,tabs])
 
-  const onOpenTabGroupModal = () => {
-    setListVisible(false)
-    setModal2Open(true)
-  }
-
-  const getTabsAsync = async () => {
-    const resp = await sendToBackgroundViaRelay({
-      name: "tabs"
-    })
-    setTabs(resp.message)
-  }
-
-  const onNavigateToNewTab = (tabId:number) => {
-    sendToBackgroundViaRelay({
-      name:"tabs",
-      body:{
-        callbackName:'navigateToTabById',
-        arguments:[tabId]
-      }
-    })
-  }
-
+  //自定义分类具体步骤相关
   const renderStepContent = () => {
     if(current === 0) {
       return <>
@@ -215,6 +248,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
               ref={inputRef}
               type="text"
               size="middle"
+              placeholder="输入分组名称，按下Enter键完成创建"
               value={inputValue}
               onChange={handleInputChange}
               onBlur={()=>setInputVisible(false)}
@@ -226,26 +260,80 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
         </>
     }
     if(current === 1){
-      return <div className="plasmo-grid xl:plasmo-grid-cols-1 2xl:plasmo-grid-cols-2 plasmo-gap-6" style={{maxHeight:'27vh',overflowY:'auto',overflowX:'hidden'}}>
-        {
-          transferTags.map(tag=>{
-            return <Transfer
-                    key={tag.title}
-                    dataSource={transferDataSource}
-                    titles={['Tabs', `${tag.title}`]}
-                    targetKeys={tag.targetKeys.value}
-                    selectedKeys={selectedKeys}
-                    onChange={tag.onChange}
-                    onSelectChange={onSelectChange}
-                    render={(item) => item.title}
-                  />
-          })
-        }
-      </div>
+      return <div className="plasmo-grid plasmo-grid-cols-1 plasmo-gap-6" style={{maxHeight:'27vh',overflowY:'auto',overflowX:'hidden'}}>
+                <Alert message={'将标签页拖动到归属的分组之下，完成标签页的分组！'} type="info" showIcon closable />
+                <Tree
+                  className="draggable-tree"
+                  defaultExpandedKeys={['Group', 'Tab']}
+                  draggable
+                  blockNode
+                  onDrop={onDrop}
+                  treeData={gData}
+                />
+              </div>
     }
     return null
   }
+  
+  //获取tabs
+  const getTabsAsync = async () => {
+    const resp = await sendToBackgroundViaRelay({
+      name: "tabs"
+    })
+    setTabs(resp.message)
+  }
 
+  //开始执行具体的分组策略
+  const onRequestGroupStart = () => {
+    setLoading(true)
+    if(isCustomGroup){
+      const treeData = gData[0].children.filter(group=>!isEmpty(group.children)).map(group=>{
+        return {
+          title:group.title,
+          children:group.children.map(tab=>{
+            return {
+              id:(tab.key as string).split('-')[1]
+            }
+          })
+        }
+      })
+      sendToBackgroundViaRelay({
+        name:"tabs",
+        body:{
+          callbackName:'groupTabsByTreeData',
+          treeData
+        }
+      }).finally(()=>{
+        getTabsAsync()
+        setModal2Open(false)
+        setLoading(false)
+      })
+    }else{
+      sendToBackgroundViaRelay({
+        name:"tabs",
+        body:{
+          callbackName:'createGroupQuick'
+        }
+      }).finally(()=>{
+        getTabsAsync()
+        setModal2Open(false)
+        setLoading(false)
+      })
+    }
+  }
+  
+  //根据tab id使浏览器跳转到对应的tab
+  const onNavigateToNewTab = (tabId:number) => {
+    sendToBackgroundViaRelay({
+      name:"tabs",
+      body:{
+        callbackName:'navigateToTabById',
+        arguments:[tabId]
+      }
+    })
+  }
+
+  //组件打开、关闭相关的事件监听
   useEffect(()=>{
     let inputElement:Element
     window.addEventListener('message',(event)=>{
@@ -270,7 +358,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     }
   },[])
   
-  
+  //tabs更新相关
   useEffect(()=>{
     document.addEventListener('visibilitychange',()=>getTabsAsync())
     getTabsAsync()
@@ -288,7 +376,8 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
             style={{ top: '24%' }}
             open={modal2Open}
             mask={false}
-            onOk={() => setModal2Open(false)}
+            okButtonProps={{disabled:isCustomGroup?current!==1:false,loading}}
+            onOk={onRequestGroupStart}
             onCancel={() => setModal2Open(false)}
             getContainer={false}
           >
