@@ -7,25 +7,30 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   const allTabs = await chrome.tabs.query({currentWindow:true})
   //获取当前激活的标签页
   const activeTab = await chrome.tabs.query({active:true,currentWindow:true})
-  //根据tab title快速创建新标签组
-  const createGroupQuick = () => {
-    return Promise.all(unGroupedTabs.map(tab => {
+  //快速分组：根据tab title快速创建新标签组
+  const createGroupQuick = (checkedList?:Array<number>) => {
+    return Promise.all(unGroupedTabs.filter(tab=>checkedList.includes(tab.id)).map(tab => {
+      //当前激活的tab页归属的分组默认不收起
       const isCurrentTab = activeTab[0].id === tab.id
       return chrome.tabs.group({tabIds:tab.id}).then(group=>{
         return chrome.tabGroups.update(group, {title: tab.title,collapsed:!isCurrentTab})
       })
     }))
   }
-  //根据提供的树形结构对未分组的标签页进行分组
+  //自定义分组：根据提供的树形结构对未分组的标签页进行分组
   const groupTabsByTreeData = (treeData:Array<{title:string,children:Array<{title:string,id:string}>}>) => {
     return Promise.all(treeData.map(group=>{
       return chrome.tabs.group({tabIds:group.children.map(tab=>parseInt(tab.id))}).then(g=>{
-         return chrome.tabGroups.update(g, {title: group.title})
+        //获取分组后激活的tab页，当前激活的tab页归属的分组默认不收起
+        return chrome.tabs.query({active:true,currentWindow:true}).then(activeTab=>{
+           const activeTabGroupId = activeTab[0].groupId
+           return chrome.tabGroups.update(g, {title: group.title,collapsed:activeTabGroupId !== g})
+         })
        })
      }))
   }
   if(req.body && req.body.callbackName === 'createGroupQuick'){
-    const result = await createGroupQuick()
+    const result = await createGroupQuick(req.body.checkedList)
     res.send({
       message:result
     })
