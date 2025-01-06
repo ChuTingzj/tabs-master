@@ -5,8 +5,8 @@ import type {
 } from "plasmo"
 import { Sender, Suggestion } from '@ant-design/x';
 import {SettingOutlined,SendOutlined,PlusOutlined} from '@ant-design/icons'
-import {Button,Modal,List,Avatar,Tag,Form,Radio,Alert,Flex,Steps,Input,Tree} from 'antd'
-import type {GetProp,InputRef,TreeProps,TreeDataNode} from 'antd'
+import {Button,Modal,List,Avatar,Tag,Form,Radio,Alert,Flex,Steps,Input,Tree,Spin,Result,Checkbox} from 'antd'
+import type {GetProp,InputRef,TreeProps,TreeDataNode,CheckboxProps} from 'antd'
 import {useState,useEffect,useMemo,useRef} from 'react'
 import type {FC} from 'react'
 import styleText from 'data-text:./input.less'
@@ -17,6 +17,7 @@ import { sendToBackgroundViaRelay } from "@plasmohq/messaging"
 import {cloneDeep,isEmpty} from 'lodash-es'
 import { TweenOneGroup } from 'rc-tween-one'
 import tailWindCssText from "data-text:~style.css"
+import {useDocumentVisibility,useEventListener,useFocusWithin} from 'ahooks'
 
 const HOST_ID = "engage-csui-input"
 const ALERT_MESSAGE_QUICK_GROUP = '根据标签的title进行快速分组，分组名称将默认采用标签的title，已经分组的tab则不会进行重新分组'
@@ -61,6 +62,8 @@ const steps = [
 ];
 const items = steps.map((item) => ({ key: item.title, title: item.title,description:item.description }));
 
+const CheckboxGroup = Checkbox.Group;
+
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"],
   world: "MAIN",
@@ -78,12 +81,28 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   const [inputValue, setInputValue] = useState('');
   const [inputVisible, setInputVisible] = useState(false);
   const [loading,setLoading] = useState(false);
+  const [success,setSuccess] = useState(false);
+  const [checkedList, setCheckedList] = useState<number[]>([]);
   const inputRef = useRef<InputRef>(null);
   const [form] = Form.useForm<FieldType>();
+  const visibility = useDocumentVisibility()
 
+  //快速分组相关
+  const tabsOptions = tabs.filter(tab=>!tab.groupId).map(tab=>({label:tab.title,value:tab.tabId}))
+  const indeterminate = checkedList.length > 0 && checkedList.length < tabsOptions.length;
+  const checkAll = tabsOptions.length === checkedList.length;
+  const onChange = (list: number[]) => {
+    setCheckedList(list);
+  };
+  const onCheckAllChange: CheckboxProps['onChange'] = (e) => {
+    setCheckedList(e.target.checked ? tabsOptions.map(tab=>tab.value) : []);
+  };
+
+  //表单相关
   const groupTypeAlertInfo = Form.useWatch((values)=>values.groupType==='quick_group'?ALERT_MESSAGE_QUICK_GROUP:ALERT_MESSAGE_CUSTOM_GROUP, form);
   const isCustomGroup = Form.useWatch((values)=>values.groupType==='custom_group', form);
 
+  //自定义分组Tree组件相关
   const [gData, setGData] = useState<TreeProps['treeData']>([]);
   const onDrop: TreeProps['onDrop'] = (info) => {
     console.log(info);
@@ -140,6 +159,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     setGData(data);
   };
 
+  //自定义分组操作步骤一相关
   const showInput = () => {
     setInputVisible(true);
   };
@@ -227,7 +247,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     return tabs
   },[value,tabs])
 
-  //自定义分类具体步骤相关
+  //自定义分类具体步骤内容相关
   const renderStepContent = () => {
     if(current === 0) {
       return <>
@@ -260,17 +280,19 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
         </>
     }
     if(current === 1){
-      return <div className="plasmo-grid plasmo-grid-cols-1 plasmo-gap-6" style={{maxHeight:'27vh',overflowY:'auto',overflowX:'hidden'}}>
-                <Alert message={'将标签页拖动到归属的分组之下，完成标签页的分组！'} type="info" showIcon closable />
-                <Tree
-                  className="draggable-tree"
-                  defaultExpandedKeys={['Group', 'Tab']}
-                  draggable
-                  blockNode
-                  onDrop={onDrop}
-                  treeData={gData}
-                />
-              </div>
+      return <Spin spinning={loading}>
+                <div className="plasmo-grid plasmo-grid-cols-1 plasmo-gap-2" style={{maxHeight:'27vh',overflowY:'auto',overflowX:'hidden'}}>
+                  <Alert message={'将标签页拖动到归属的分组之下，完成标签页的分组！'} type="info" showIcon closable />
+                  <Tree
+                    className="draggable-tree"
+                    defaultExpandedKeys={['Group', 'Tab']}
+                    draggable
+                    blockNode
+                    onDrop={onDrop}
+                    treeData={gData}
+                  />
+                </div>
+             </Spin>
     }
     return null
   }
@@ -285,41 +307,57 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
 
   //开始执行具体的分组策略
   const onRequestGroupStart = () => {
-    setLoading(true)
-    if(isCustomGroup){
-      const treeData = gData[0].children.filter(group=>!isEmpty(group.children)).map(group=>{
-        return {
-          title:group.title,
-          children:group.children.map(tab=>{
-            return {
-              id:(tab.key as string).split('-')[1]
-            }
-          })
-        }
-      })
-      sendToBackgroundViaRelay({
-        name:"tabs",
-        body:{
-          callbackName:'groupTabsByTreeData',
-          treeData
-        }
-      }).finally(()=>{
-        getTabsAsync()
-        setModal2Open(false)
-        setLoading(false)
-      })
-    }else{
-      sendToBackgroundViaRelay({
-        name:"tabs",
-        body:{
-          callbackName:'createGroupQuick'
-        }
-      }).finally(()=>{
-        getTabsAsync()
-        setModal2Open(false)
-        setLoading(false)
-      })
-    }
+    form.validateFields().then(()=>{
+      setLoading(true)
+      if(isCustomGroup){
+        const treeData = gData[0].children.filter(group=>!isEmpty(group.children)).map(group=>{
+          return {
+            title:group.title,
+            children:group.children.map(tab=>{
+              return {
+                id:(tab.key as string).split('-')[1]
+              }
+            })
+          }
+        })
+        sendToBackgroundViaRelay({
+          name:"tabs",
+          body:{
+            callbackName:'groupTabsByTreeData',
+            treeData
+          }
+        })
+        .then(()=>setSuccess(true))
+        .finally(()=>{
+          getTabsAsync()
+          setLoading(false)
+          setTimeout(()=>{
+            setModal2Open(false)
+            setSuccess(false)
+          },1000)
+        })
+      }else{
+        console.log(checkedList,'front');
+        
+        sendToBackgroundViaRelay({
+          name:"tabs",
+          body:{
+            callbackName:'createGroupQuick',
+            checkedList
+          }
+        })
+        .then(()=>setSuccess(true))
+        .finally(()=>{
+          getTabsAsync()
+          setLoading(false)
+          setTimeout(()=>{
+            setModal2Open(false)
+            setSuccess(false)
+          },1000)
+        })
+      }
+
+    })
   }
   
   //根据tab id使浏览器跳转到对应的tab
@@ -334,38 +372,36 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   }
 
   //组件打开、关闭相关的事件监听
-  useEffect(()=>{
-    let inputElement:Element
-    window.addEventListener('message',(event)=>{
-      if(event.data.type === 'onCloseGroupComponent'){
-        setListVisible(false)
-      }
-      if(event.data.type === 'openGroupComponent' || event.data.type === 'onCloseGroupComponent'){
-        setModal2Open(false)
-        setVisible(event.data.visible)
-        setTimeout(()=>{
-          inputElement = document.getElementById(HOST_ID).shadowRoot?.querySelector('.ant-sender-input')
-          inputElement?.addEventListener('focus',()=>{
-            setListVisible(true)
-          })
-        })
-        
-      }
-    })
-    return () => {
-      window.removeEventListener('message',()=>{})
-      inputElement?.removeEventListener('focus',()=>{})
+  useEventListener('message',(event)=>{
+    if(event.data.type === 'onCloseGroupComponent'){
+      setListVisible(false)
     }
-  },[])
+    if(event.data.type === 'openGroupComponent' || event.data.type === 'onCloseGroupComponent'){
+      setModal2Open(false)
+      setVisible(event.data.visible)
+      setListVisible(event.data.visible)
+      setTimeout(()=>{
+        const inputElement = document.getElementById(HOST_ID).shadowRoot?.querySelector('.ant-sender-input')
+        inputElement?.addEventListener('focus',()=>{
+          setListVisible(true)
+        })
+      })
+    }
+  },{target:window})
   
   //tabs更新相关
   useEffect(()=>{
-    document.addEventListener('visibilitychange',()=>getTabsAsync())
-    getTabsAsync()
-    return () => {
-      document.removeEventListener('visibilitychange',()=>{})
+    if(visibility === 'hidden'){
+      (document.getElementById(HOST_ID).shadowRoot?.querySelector('.ant-sender-input') as HTMLInputElement)?.blur()
+      setListVisible(false)
+      setModal2Open(false)
     }
-  },[])
+    if(visibility === 'visible'){
+      (document.getElementById(HOST_ID).shadowRoot?.querySelector('.ant-sender-input') as HTMLInputElement)?.focus()
+    }
+    getTabsAsync()
+  },[visibility,listVisible])
+
   return (
     <ThemeProvider>
       <StyleProvider container={document.getElementById(HOST_ID).shadowRoot}>
@@ -380,6 +416,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
             onOk={onRequestGroupStart}
             onCancel={() => setModal2Open(false)}
             getContainer={false}
+            destroyOnClose
           >
             <Form
               form={form}
@@ -397,23 +434,71 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
                   >
                     <Radio.Group options={suggestions} />
                   </Form.Item>
-                  <Alert message={groupTypeAlertInfo} type="info" showIcon />
+                  {isCustomGroup? <Alert message={groupTypeAlertInfo} type="info" showIcon /> :<Spin spinning={loading}>
+                    <Alert message={groupTypeAlertInfo} type="info" showIcon />
+                  </Spin>}
                 </Flex>
               </Form.Item>
-              {isCustomGroup?<Form.Item label="自定义分组步骤">
-                <Flex vertical gap='middle'>
-                  <Steps current={current} items={items} />
-                  {renderStepContent()}
-                  <Flex>
-                    {current < steps.length - 1 && (
-                      <Button type="primary" onClick={() => next()}>下一步</Button>
-                    )}
-                    {current > 0 && (
-                      <Button style={{ margin: '0 8px' }} onClick={() => prev()}>上一步</Button>
-                    )}
-                  </Flex> 
-                </Flex>
-              </Form.Item>:null}
+              {isCustomGroup?
+                <Form.Item label="自定义分组步骤" name='value' rules={[{
+                  validator(rule, value, callback) {
+                    const canGroupedTabs = tabs.filter(tab=>!tab.groupId)
+                    if(isEmpty(canGroupedTabs)){
+                      return Promise.reject(new Error('当前没有可分组的标签页！'))
+                    }
+                    const treeData = gData[0].children.filter(group=>!isEmpty(group.children)).map(group=>{
+                      return {
+                        title:group.title,
+                        children:group.children.map(tab=>{
+                          return {
+                            id:(tab.key as string).split('-')[1]
+                          }
+                        })
+                      }
+                    })
+                    if(isEmpty(treeData)){
+                      return Promise.reject(new Error('还未创建分组或者未对标签页进行分类！'))
+                    }
+                    const existEmptyGroup = treeData.some(group=>isEmpty(group.children))
+                    if(existEmptyGroup){
+                      return Promise.reject(new Error('存在未分配标签页的分组！'))
+                    }
+                    return Promise.resolve()
+                  },
+                }]}>
+                  {!success ? <Flex vertical gap='middle'>
+                    <Steps current={current} items={items} />
+                    {renderStepContent()}
+                    <Flex>
+                      {current < steps.length - 1 && (
+                        <Button type="primary" onClick={() => next()}>下一步</Button>
+                      )}
+                      {current > 0 && (
+                        <Button style={{ margin: '0 .5rem' }} onClick={() => prev()}>上一步</Button>
+                      )}
+                    </Flex>
+                  </Flex> : null}
+                  {success? <Result status="success" title="分组完成!"/>:null} 
+                </Form.Item>:
+                <Form.Item label='执行快速分组的标签页' name='value' rules={[{
+                  validator(rule, value, callback) {
+                    const canGroupedTabs = tabs.filter(tab=>!tab.groupId)
+                    if(isEmpty(canGroupedTabs)){
+                      return Promise.reject(new Error('当前没有可分组的标签页！'))
+                    }
+                    if(isEmpty(checkedList)){
+                      return Promise.reject(new Error('请选择需要分组的标签页！'))
+                    }
+                    return Promise.resolve()
+                  },
+                }]}>
+                  {!success ? <Flex vertical>
+                    <Checkbox indeterminate={indeterminate} onChange={onCheckAllChange} checked={checkAll}>全选</Checkbox>
+                    <CheckboxGroup options={tabsOptions} value={checkedList} onChange={onChange} />
+                  </Flex> : null}
+                  {success? <Result status="success" title="分组完成!"/>:null} 
+                </Form.Item>
+              }
             </Form>
           </Modal>
           {visible &&  <Sender
