@@ -1,15 +1,19 @@
-import type { 
+import { StyleProvider } from "@ant-design/cssinjs"
+import { FloatButton, Tooltip } from "antd"
+import antdResetCssText from "data-text:antd/dist/reset.css"
+import type {
   PlasmoCSConfig,
   PlasmoCSUIProps,
-  PlasmoGetShadowHostId } from "plasmo"
-import { FloatButton,Tooltip } from 'antd';
-import type {FC} from 'react'
-import {LoveIcon} from '../icon/heart'
-import {TabIcon} from '../icon/tab'
-import { ThemeProvider } from "~theme"
-import antdResetCssText from "data-text:antd/dist/reset.css"
-import { StyleProvider } from "@ant-design/cssinjs"
+  PlasmoGetShadowHostId
+} from "plasmo"
+import type { FC } from "react"
+
 import { sendToBackgroundViaRelay } from "@plasmohq/messaging"
+
+import { ThemeProvider } from "~theme"
+
+import { LoveIcon } from "../icon/heart"
+import { TabIcon } from "../icon/tab"
 
 const HOST_ID = "engage-csui-entry"
 
@@ -20,27 +24,27 @@ export const getStyle = () => {
   style.textContent = antdResetCssText
   return style
 }
- 
+
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"],
   world: "MAIN",
-  run_at: 'document_start',
+  run_at: "document_start"
 }
 
 const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   const onOpenGroupComponent = async () => {
-    window.postMessage({type: 'openGroupComponent',visible:true}, '*')
+    window.postMessage({ type: "openGroupComponent", visible: true }, "*")
   }
   const onCloseGroupComponent = async () => {
-    window.postMessage({type: 'onCloseGroupComponent',visible:false}, '*')
+    window.postMessage({ type: "onCloseGroupComponent", visible: false }, "*")
   }
   //监听用户按下ESC键，然后关闭组件
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
       onCloseGroupComponent()
     }
     //监听用户按下command + ctrl + z键，然后打开组件
-    if (e.key === 'z' && e.metaKey && e.ctrlKey) {
+    if (e.key === "z" && e.metaKey && e.ctrlKey) {
       onOpenGroupComponent()
     }
   })
@@ -52,9 +56,17 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
           trigger="hover"
           type="default"
           style={{ insetInlineEnd: 94 }}
-          icon={<LoveIcon />}
-        >
-          <Tooltip title="标签页分组管理" color={'hotpink'} key={'hotpink'} placement='left' getPopupContainer={()=> document.getElementById(HOST_ID).shadowRoot.querySelector('#plasmo-shadow-container')}>
+          icon={<LoveIcon />}>
+          <Tooltip
+            title="标签页分组管理"
+            color={"hotpink"}
+            key={"hotpink"}
+            placement="left"
+            getPopupContainer={() =>
+              document
+                .getElementById(HOST_ID)
+                .shadowRoot.querySelector("#plasmo-shadow-container")
+            }>
             <FloatButton onClick={onOpenGroupComponent} icon={<TabIcon />} />
           </Tooltip>
         </FloatButton.Group>
