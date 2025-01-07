@@ -1,7 +1,7 @@
 import { StyleProvider } from "@ant-design/cssinjs"
 import { PlusOutlined, SendOutlined, SettingOutlined } from "@ant-design/icons"
 import { Sender, Suggestion } from "@ant-design/x"
-import { useDocumentVisibility, useEventListener } from "ahooks"
+import { useDocumentVisibility, useEventListener, useFocusWithin } from "ahooks"
 import {
   Alert,
   Avatar,
@@ -17,6 +17,7 @@ import {
   Spin,
   Steps,
   Tag,
+  Tooltip,
   Tree
 } from "antd"
 import type {
@@ -114,8 +115,28 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   const [success, setSuccess] = useState(false)
   const [checkedList, setCheckedList] = useState<number[]>([])
   const inputRef = useRef<InputRef>(null)
+  const listCurrent = useRef(-1)
   const [form] = Form.useForm<FieldType>()
   const visibility = useDocumentVisibility()
+  const isFocusWithin = useFocusWithin(() =>
+    document
+      .getElementById(HOST_ID)
+      ?.shadowRoot?.querySelector(".ant-sender-input")
+  )
+
+  //监听用户按下方向键
+  useEventListener(
+    "keydown",
+    (event) => {
+      if (event.key === "ArrowDown" && isFocusWithin) {
+        listCurrent.current++
+      }
+      if (event.key === "ArrowUp" && isFocusWithin) {
+        listCurrent.current--
+      }
+    },
+    { target: window }
+  )
 
   //快速分组相关
   const tabsOptions = tabs
@@ -289,7 +310,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
       //使list-container滚动容器滚动到第一个匹配的子项
       document
         .getElementById(HOST_ID)
-        .shadowRoot?.querySelector(".list-container")
+        ?.shadowRoot?.querySelector(".list-container")
         ?.scrollTo(0, 0)
       return matchedTabsByTitle.concat(
         tabs.filter(
@@ -305,7 +326,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
       //使list-container滚动容器滚动到第一个匹配的子项
       document
         .getElementById(HOST_ID)
-        .shadowRoot?.querySelector(".list-container")
+        ?.shadowRoot?.querySelector(".list-container")
         ?.scrollTo(0, 0)
       return matchedTabsByGroupTitle.concat(
         tabs.filter(
@@ -475,7 +496,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
         setTimeout(() => {
           const inputElement = document
             .getElementById(HOST_ID)
-            .shadowRoot?.querySelector(".ant-sender-input")
+            ?.shadowRoot?.querySelector(".ant-sender-input")
           inputElement?.addEventListener("focus", () => {
             setListVisible(true)
           })
@@ -491,7 +512,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
       ;(
         document
           .getElementById(HOST_ID)
-          .shadowRoot?.querySelector(".ant-sender-input") as HTMLInputElement
+          ?.shadowRoot?.querySelector(".ant-sender-input") as HTMLInputElement
       )?.blur()
       setListVisible(false)
       setModal2Open(false)
@@ -500,7 +521,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
       ;(
         document
           .getElementById(HOST_ID)
-          .shadowRoot?.querySelector(".ant-sender-input") as HTMLInputElement
+          ?.shadowRoot?.querySelector(".ant-sender-input") as HTMLInputElement
       )?.focus()
     }
     getTabsAsync()
@@ -508,7 +529,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
 
   return (
     <ThemeProvider>
-      <StyleProvider container={document.getElementById(HOST_ID).shadowRoot}>
+      <StyleProvider container={document.getElementById(HOST_ID)?.shadowRoot}>
         <div className="input-container">
           <Modal
             title="分组"
@@ -668,11 +689,20 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
             <Sender
               value={value}
               actions={
-                <Button
-                  onClick={onOpenTabGroupModal}
-                  type="text"
-                  icon={<SettingOutlined style={{ color: "pink" }} />}
-                />
+                <Tooltip
+                  title="分组设置"
+                  color="pink"
+                  getPopupContainer={() =>
+                    document
+                      .getElementById(HOST_ID)
+                      ?.shadowRoot?.querySelector(".input-container")
+                  }>
+                  <Button
+                    onClick={onOpenTabGroupModal}
+                    type="text"
+                    icon={<SettingOutlined style={{ color: "pink" }} />}
+                  />
+                </Tooltip>
               }
               onChange={(nextVal) => {
                 setValue(nextVal)
@@ -687,7 +717,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
               itemLayout="horizontal"
               size="small"
               dataSource={filteredTabs}
-              renderItem={(item) => (
+              renderItem={(item, index) => (
                 <List.Item
                   style={{ backgroundColor: item.backgroundColor }}
                   actions={[
