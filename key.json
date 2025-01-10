@@ -1,0 +1,18 @@
+{
+  "installed": {
+    "client_id": "1056333804273-3ef7foem32se5ikd1ak7huba7g0l0445.apps.googleusercontent.com",
+    "project_id": "chrome-webstore-upload-447206",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_secret": "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",
+    "redirect_uris": [
+      "http://localhost"
+    ]
+  },
+  "chrome": {
+    "clientId": "1056333804273-3ef7foem32se5ikd1ak7huba7g0l0445.apps.googleusercontent.com",
+    "clientSecret": "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",
+    "refreshToken": "1//0ej5qCuX2QFHKCgYIARAAGA4SNwF-L9IraRnsVbCKwlpYML_4GVwvPJ7RnyQL1nXnnQzuFQjo6aWd_YJ0uMAAtp2F-VAuL0SfTys"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "Configuration": {
+    "message": "配置",
+    "description": "Configuration"
+  },
+  "Welcome": {
+    "message": "欢迎来到Tabs Master",
+    "description": "Welcome message"
+  },
+  "Language": {
+    "message": "语言设置",
+    "description": "Language"
+  },
+  "TabsGroupManagement": {
+    "message": "标签页分组管理",
+    "description": "Tabs Group Management"
+  }
+}

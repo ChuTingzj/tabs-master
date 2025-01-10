@@ -1,0 +1,18 @@
+{
+  "Configuration": {
+    "message": "Configuration",
+    "description": "Configuration"
+  },
+  "Welcome": {
+    "message": "Welcome to Tabs Master",
+    "description": "Welcome message"
+  },
+  "Language": {
+    "message": "Language Settings",
+    "description": "Language"
+  },
+  "TabsGroupManagement": {
+    "message": "Tabs Group Management",
+    "description": "Tabs Group Management"
+  }
+}

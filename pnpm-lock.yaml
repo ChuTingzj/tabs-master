@@ -17,6 +17,9 @@ dependencies:
   '@plasmohq/messaging':
     specifier: 0.6.2
     version: 0.6.2(react@18.2.0)
+  '@plasmohq/storage':
+    specifier: 1.13.0
+    version: 1.13.0(react@18.2.0)
   ahooks:
     specifier: 3.8.4
     version: 3.8.4(react@18.2.0)
@@ -2473,6 +2476,18 @@ packages:
       - velocityjs
       - walrus
       - whiskers
+    dev: false
+
+  /@plasmohq/storage@1.13.0(react@18.2.0):
+    resolution: {integrity: sha1-HBh3284hxVi3OpvPlkwY0VFxZ4M=, tarball: http://r.npm.sankuai.com/@plasmohq/storage/download/@plasmohq/storage-1.13.0.tgz}
+    peerDependencies:
+      react: ^16.8.6 || ^17 || ^18
+    peerDependenciesMeta:
+      react:
+        optional: true
+    dependencies:
+      pify: 6.1.0
+      react: 18.2.0
     dev: false
 
   /@pnpm/config.env-replace@1.1.0:
@@ -5346,6 +5361,11 @@ packages:
     requiresBuild: true
     dev: false
     optional: true
+
+  /pify@6.1.0:
+    resolution: {integrity: sha1-258uv7pl8LwUTbZa6E0aSGq3KQk=, tarball: http://r.npm.sankuai.com/pify/download/pify-6.1.0.tgz}
+    engines: {node: '>=14.16'}
+    dev: false
 
   /pirates@4.0.6:
     resolution: {integrity: sha1-MBiuMuz8/2wpuiJny/IRZqwfNrk=, tarball: http://r.npm.sankuai.com/pirates/download/pirates-4.0.6.tgz}
