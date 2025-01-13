@@ -1,7 +1,8 @@
 <p align="center"><a target="_blank" rel="noreferrer noopener"><img width="250" alt="Tabs Master's mascot" src="https://raw.githubusercontent.com/ChuTingzj/tabs-master/main/assets/icon.png"></a></p>
 <p align="center">Tabs Master<strong> designed to manage</strong> browser tabs and aims to <strong>reduce the burden</strong> while browsing the web.</p>
 <br/>
-<p align="center"><a rel="noreferrer noopener"><img alt="Chrome Web Store" src="https://img.shields.io/badge/Chrome-141e24.svg?&style=for-the-badge&logo=google-chrome&logoColor=white"></a>
+
+<p align="center"><img alt="Chrome Web Store" src="https://img.shields.io/badge/Chrome-141e24.svg?&style=for-the-badge&logo=google-chrome&logoColor=white"> <img alt="Firefox Add-ons" src="https://img.shields.io/badge/Firefox-141e24.svg?&style=for-the-badge&logo=firefox-browser&logoColor=white"> <img alt="Apple App Store" src="https://img.shields.io/badge/Safari-141e24.svg?&style=for-the-badge&logo=safari&logoColor=white">  <img alt="Edge Addons" src="https://img.shields.io/badge/Edge-141e24.svg?&style=for-the-badge&logo=microsoft-edge&logoColor=white"> </p>
 
 <h2 align="center">Tabs Master</h2>
 <br/>
