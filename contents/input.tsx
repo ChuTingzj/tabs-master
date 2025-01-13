@@ -30,7 +30,7 @@ import type {
 import styleText from "data-text:./input.less"
 import tailWindCssText from "data-text:~style.css"
 import antdResetCssText from "data-text:antd/dist/reset.css"
-import { cloneDeep, isEmpty } from "lodash-es"
+import { cloneDeep, isEmpty, nth } from "lodash-es"
 import type {
   PlasmoCSConfig,
   PlasmoCSUIProps,
@@ -115,9 +115,67 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   const [success, setSuccess] = useState(false)
   const [checkedList, setCheckedList] = useState<number[]>([])
   const inputRef = useRef<InputRef>(null)
-  const listCurrent = useRef(-1)
+  const [currentIndex, setCurrentIndex] = useState(-1)
   const [form] = Form.useForm<FieldType>()
   const visibility = useDocumentVisibility()
+
+  const updateListCursor = (tabs: Array<any>) => {
+    const tabs_clone = cloneDeep(tabs) as Array<any>
+    if (currentIndex >= 0) {
+      const currentTab = nth(tabs_clone, currentIndex)
+      if (currentTab) {
+        tabs_clone.forEach((tab: any) => {
+          Reflect.set(tab, "backgroundColor", "")
+        })
+        Reflect.set(currentTab, "backgroundColor", "pink")
+        const target = document
+          .getElementById(HOST_ID)
+          ?.shadowRoot?.querySelectorAll(".ant-list-item")[currentIndex]
+        target?.scrollIntoView({ behavior: "instant", block: "center" })
+      }
+    }
+    return tabs_clone
+  }
+
+  //根据value模糊匹配tabs中子项的title，并将匹配到的子项放到tabs中的第一个
+  const filteredTabs = useMemo(() => {
+    if (!tabs.length || !value) return updateListCursor(tabs)
+    const upperCaseValue = value.toUpperCase()
+    //匹配tabs的title维度
+    const matchedTabsByTitle = cloneDeep(
+      tabs.filter((tab: any) =>
+        tab?.title?.toUpperCase().includes(upperCaseValue)
+      )
+    )
+    //匹配tabs的groupTitle维度
+    const matchedTabsByGroupTitle = cloneDeep(
+      tabs.filter((tab: any) =>
+        tab?.groupTitle?.toUpperCase()?.includes(upperCaseValue)
+      )
+    )
+    if (matchedTabsByTitle.length > 0) {
+      //使list-container滚动容器滚动到第一个匹配的子项
+      document
+        .getElementById(HOST_ID)
+        ?.shadowRoot?.querySelector(".list-container")
+        ?.scrollTo(0, 0)
+      return updateListCursor(matchedTabsByTitle)
+    }
+    if (matchedTabsByGroupTitle.length > 0) {
+      //使list-container滚动容器滚动到第一个匹配的子项
+      document
+        .getElementById(HOST_ID)
+        ?.shadowRoot?.querySelector(".list-container")
+        ?.scrollTo(0, 0)
+      return updateListCursor(matchedTabsByGroupTitle)
+    }
+    return updateListCursor(tabs)
+  }, [value, tabs, currentIndex])
+
+  useEffect(() => {
+    setCurrentIndex(-1)
+  }, [value])
+
   const isFocusWithin = useFocusWithin(() =>
     document
       .getElementById(HOST_ID)
@@ -129,10 +187,25 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     "keydown",
     (event) => {
       if (event.key === "ArrowDown" && isFocusWithin) {
-        listCurrent.current++
+        setCurrentIndex((preState) => {
+          const currentTab = nth(filteredTabs, preState + 1)
+          if (!currentTab) return preState
+          return preState + 1
+        })
       }
       if (event.key === "ArrowUp" && isFocusWithin) {
-        listCurrent.current--
+        setCurrentIndex((preState) => {
+          const currentTab = nth(filteredTabs, preState - 1)
+          if (!currentTab || preState - 1 < 0) return preState
+          return preState - 1
+        })
+      }
+      //监听用户按下回车键
+      if (event.key === "Enter" && isFocusWithin) {
+        const currentTab = nth(filteredTabs, currentIndex)
+        if (currentTab && currentIndex >= 0) {
+          onNavigateToNewTab(currentTab.tabId)
+        }
       }
     },
     { target: window }
@@ -285,58 +358,6 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     setListVisible(false)
     setModal2Open(true)
   }
-
-  //根据value模糊匹配tabs中子项的title，并将匹配到的子项放到tabs中的第一个
-  const filteredTabs = useMemo(() => {
-    if (!tabs.length || !value) return tabs
-    const upperCaseValue = value.toUpperCase()
-    //匹配tabs的title维度
-    const matchedTabsByTitle = cloneDeep(
-      tabs.filter((tab: any) =>
-        tab?.title?.toUpperCase().includes(upperCaseValue)
-      )
-    )
-    //匹配tabs的groupTitle维度
-    const matchedTabsByGroupTitle = cloneDeep(
-      tabs.filter((tab: any) =>
-        tab?.groupTitle?.toUpperCase()?.includes(upperCaseValue)
-      )
-    )
-    if (matchedTabsByTitle.length > 0) {
-      //为matchedTabsByTitle每一个元素添加一个属性backgroundColor
-      matchedTabsByTitle.forEach((tab: any) =>
-        Reflect.set(tab, "backgroundColor", "pink")
-      )
-      //使list-container滚动容器滚动到第一个匹配的子项
-      document
-        .getElementById(HOST_ID)
-        ?.shadowRoot?.querySelector(".list-container")
-        ?.scrollTo(0, 0)
-      return matchedTabsByTitle.concat(
-        tabs.filter(
-          (tab: any) => !tab?.title?.toUpperCase()?.includes(upperCaseValue)
-        )
-      )
-    }
-    if (matchedTabsByGroupTitle.length > 0) {
-      //为matchedTabsByGroupTitle每一个元素添加一个属性backgroundColor
-      matchedTabsByGroupTitle.forEach((tab: any) =>
-        Reflect.set(tab, "backgroundColor", "pink")
-      )
-      //使list-container滚动容器滚动到第一个匹配的子项
-      document
-        .getElementById(HOST_ID)
-        ?.shadowRoot?.querySelector(".list-container")
-        ?.scrollTo(0, 0)
-      return matchedTabsByGroupTitle.concat(
-        tabs.filter(
-          (tab: any) =>
-            !tab?.groupTitle?.toUpperCase()?.includes(upperCaseValue)
-        )
-      )
-    }
-    return tabs
-  }, [value, tabs])
 
   //自定义分类具体步骤内容相关
   const renderStepContent = () => {
