@@ -46,6 +46,9 @@ devDependencies:
   '@ianvs/prettier-plugin-sort-imports':
     specifier: 4.1.1
     version: 4.1.1(prettier@3.2.4)
+  '@playwright/test':
+    specifier: 1.49.1
+    version: 1.49.1
   '@types/chrome':
     specifier: 0.0.258
     version: 0.0.258
@@ -2490,6 +2493,14 @@ packages:
       react: 18.2.0
     dev: false
 
+  /@playwright/test@1.49.1:
+    resolution: {integrity: sha1-Vfo2BlizGHv7Y3Hi+KZPUO+AyCc=, tarball: http://r.npm.sankuai.com/@playwright/test/download/@playwright/test-1.49.1.tgz}
+    engines: {node: '>=18'}
+    hasBin: true
+    dependencies:
+      playwright: 1.49.1
+    dev: true
+
   /@pnpm/config.env-replace@1.1.0:
     resolution: {integrity: sha1-qynaU99B6JSKAPJDPwhfVN6LOkw=, tarball: http://r.npm.sankuai.com/@pnpm/config.env-replace/download/@pnpm/config.env-replace-1.1.0.tgz}
     engines: {node: '>=12.22.0'}
@@ -4178,6 +4189,14 @@ packages:
       universalify: 2.0.1
     dev: false
 
+  /fsevents@2.3.2:
+    resolution: {integrity: sha1-ilJveLj99GI7cJ4Ll1xSwkwC/Ro=, tarball: http://r.npm.sankuai.com/fsevents/download/fsevents-2.3.2.tgz}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+    requiresBuild: true
+    dev: true
+    optional: true
+
   /fsevents@2.3.3:
     resolution: {integrity: sha1-ysZAd4XQNnWipeGlMFxpezR9kNY=, tarball: http://r.npm.sankuai.com/fsevents/download/fsevents-2.3.3.tgz}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -5464,6 +5483,22 @@ packages:
       - walrus
       - whiskers
     dev: false
+
+  /playwright-core@1.49.1:
+    resolution: {integrity: sha1-MsYvBG6VD1hv+eNe1JCkJPIkgBU=, tarball: http://r.npm.sankuai.com/playwright-core/download/playwright-core-1.49.1.tgz}
+    engines: {node: '>=18'}
+    hasBin: true
+    dev: true
+
+  /playwright@1.49.1:
+    resolution: {integrity: sha1-gwJm28owCAIq+ntHg1ZduZRN7Xw=, tarball: http://r.npm.sankuai.com/playwright/download/playwright-1.49.1.tgz}
+    engines: {node: '>=18'}
+    hasBin: true
+    dependencies:
+      playwright-core: 1.49.1
+    optionalDependencies:
+      fsevents: 2.3.2
+    dev: true
 
   /postcss-import@15.1.0(postcss@8.4.49):
     resolution: {integrity: sha1-QcZO2MwOI3NalpizJJ/9v3BK3HA=, tarball: http://r.npm.sankuai.com/postcss-import/download/postcss-import-15.1.0.tgz}
