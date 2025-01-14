@@ -249,12 +249,13 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
       }
       if (isKeyUp && event.code === "AltLeft") {
         setSwitchContainerVisible(false)
+        setCurrentRecentlySwitchedTabIndex(-1)
         const currentTab = nth(
           recentlySwitchedTabList,
           currentRecentlySwitchedTabIndex
         )
         const tabId = currentTab?.tabId
-        if (tabId) {
+        if (tabId && currentRecentlySwitchedTabIndex >= 0) {
           onNavigateToNewTab(tabId)
         }
       }
