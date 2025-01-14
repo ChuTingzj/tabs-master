@@ -12,8 +12,10 @@
 
 ## Features
 
-- **Tab Groups**: Create and manage tab groups to keep your tabs organized.
-- **Tab Search**: Quickly search for tabs and switch between them.
+- **Tab Groups & Tabs Search**: Create and manage tab groups to keep your tabs organized.
+  - can use `Ctrl+Command+Z` to show the `group` and `search` component
+- **Tab Switch**: Quickly search for tabs and switch between them.
+  - can use `Alt` to show the `switch` component that display your recently used tabs, and use `Alt+Tab` to switch between these tabs
 
 ## How to contribute
 
