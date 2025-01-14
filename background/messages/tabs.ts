@@ -1,6 +1,25 @@
+import { isEmpty } from "lodash-es"
+
 import type { PlasmoMessaging } from "@plasmohq/messaging"
 
+import { storage } from "./storage"
+
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
+  const currentWindow = await chrome.windows.getCurrent()
+  const currentWindowId = currentWindow.id
+
+  chrome.tabs.onActivated.addListener(async (activeInfo) => {
+    const currentWindowRecentlyUsedTabs = await storage.get(
+      `window-${currentWindowId}-recently-usedTabs`
+    )
+    const { tabId, windowId } = activeInfo
+    if (isEmpty(currentWindowRecentlyUsedTabs)) {
+      storage.set(`window-${windowId}-recently-usedTabs`, [tabId])
+    } else {
+      const newRecentlyUsedTabs = [tabId, ...currentWindowRecentlyUsedTabs]
+      storage.set(`window-${windowId}-recently-usedTabs`, newRecentlyUsedTabs)
+    }
+  })
   //获取当前未分组的标签页
   const unGroupedTabs = await chrome.tabs.query({
     currentWindow: true,
@@ -110,6 +129,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   const unGroupedTabsResult = result.filter((tab) => tab.groupId === undefined)
   const groupedTabsResult = result.filter((tab) => tab.groupId !== undefined)
   res.send({
+    currentWindowId,
     message: groupedTabsResult.concat(unGroupedTabsResult)
   })
 }

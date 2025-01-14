@@ -9,6 +9,7 @@ import {
   Checkbox,
   Flex,
   Form,
+  Image,
   Input,
   List,
   Modal,
@@ -104,6 +105,7 @@ export const config: PlasmoCSConfig = {
 const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   const [value, setValue] = useState("")
   const [visible, setVisible] = useState(false)
+  const [switchContainerVisible, setSwitchContainerVisible] = useState(false)
   const [listVisible, setListVisible] = useState(false)
   const [modal2Open, setModal2Open] = useState(false)
   const [tabs, setTabs] = useState([])
@@ -116,9 +118,30 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   const [checkedList, setCheckedList] = useState<number[]>([])
   const inputRef = useRef<InputRef>(null)
   const [currentIndex, setCurrentIndex] = useState(-1)
+  const [currentRecentlySwitchedTabIndex, setCurrentRecentlySwitchedTabIndex] =
+    useState(-1)
+  const [recentlySwitchedTab, setRecentlySwitchedTab] = useState<Array<number>>(
+    []
+  )
   const [form] = Form.useForm<FieldType>()
   const visibility = useDocumentVisibility()
 
+  const recentlySwitchedTabList = useMemo(() => {
+    const recentlySwitchedTabClone = cloneDeep(
+      [...new Set(recentlySwitchedTab)].slice(0, 6)
+    )
+    return recentlySwitchedTabClone
+      .map((tabId, index) => {
+        const target = tabs.filter((tab) => tab.tabId === tabId).shift()
+        if (index === currentRecentlySwitchedTabIndex) {
+          return { ...target, backgroundColor: "pink" }
+        }
+        return target
+      })
+      .filter(Boolean)
+  }, [recentlySwitchedTab, currentRecentlySwitchedTabIndex])
+
+  //列表光标快速选择方法
   const updateListCursor = (tabs: Array<any>) => {
     const tabs_clone = cloneDeep(tabs) as Array<any>
     if (currentIndex >= 0) {
@@ -184,16 +207,18 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
 
   //监听用户按下方向键
   useEventListener(
-    "keydown",
-    (event) => {
-      if (event.key === "ArrowDown" && isFocusWithin) {
+    ["keydown", "keyup"],
+    (event: KeyboardEvent) => {
+      const isKeyDown = event.type === "keydown"
+      const isKeyUp = event.type === "keyup"
+      if (isKeyDown && event.key === "ArrowDown" && isFocusWithin) {
         setCurrentIndex((preState) => {
           const currentTab = nth(filteredTabs, preState + 1)
           if (!currentTab) return preState
           return preState + 1
         })
       }
-      if (event.key === "ArrowUp" && isFocusWithin) {
+      if (isKeyDown && event.key === "ArrowUp" && isFocusWithin) {
         setCurrentIndex((preState) => {
           const currentTab = nth(filteredTabs, preState - 1)
           if (!currentTab || preState - 1 < 0) return preState
@@ -201,10 +226,36 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
         })
       }
       //监听用户按下回车键
-      if (event.key === "Enter" && isFocusWithin) {
+      if (isKeyDown && event.key === "Enter" && isFocusWithin) {
         const currentTab = nth(filteredTabs, currentIndex)
         if (currentTab && currentIndex >= 0) {
           onNavigateToNewTab(currentTab.tabId)
+        }
+      }
+      //监听用户按下Alt+Tab键
+      if (isKeyDown && event.altKey) {
+        event.preventDefault()
+        setModal2Open(false)
+        setVisible(false)
+        setListVisible(false)
+        setSwitchContainerVisible(true)
+        if (event.key === "Tab") {
+          setCurrentRecentlySwitchedTabIndex((preState) => {
+            const currentTab = nth(recentlySwitchedTabList, preState + 1)
+            const index = !currentTab ? 0 : preState + 1
+            return index
+          })
+        }
+      }
+      if (isKeyUp && event.code === "AltLeft") {
+        setSwitchContainerVisible(false)
+        const currentTab = nth(
+          recentlySwitchedTabList,
+          currentRecentlySwitchedTabIndex
+        )
+        const tabId = currentTab?.tabId
+        if (tabId) {
+          onNavigateToNewTab(tabId)
         }
       }
     },
@@ -430,6 +481,14 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     const resp = await sendToBackgroundViaRelay({
       name: "tabs"
     })
+    const { message: recentlySwitchedTabs } = await sendToBackgroundViaRelay({
+      name: "storage",
+      body: {
+        key: `window-${resp.currentWindowId}-recently-usedTabs`,
+        callbackName: "getStorage"
+      }
+    })
+    setRecentlySwitchedTab(recentlySwitchedTabs)
     setTabs(resp.message)
   }
 
@@ -730,6 +789,26 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
               }}
               placeholder="输入关键字搜索tab，支持分组名称和tab标题维度的搜索"
             />
+          )}
+          {switchContainerVisible && (
+            <div className="switch-container">
+              {recentlySwitchedTabList.map((tab) => {
+                return (
+                  <div
+                    key={tab.tabId}
+                    className="plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-5 plasmo-p-2 plasmo-rounded-2xl"
+                    style={{
+                      backgroundColor: tab.backgroundColor
+                    }}>
+                    <Image src={tab.favIconUrl} width={32} height={32} />
+                    <div className="plasmo-flex plasmo-flex-col plasmo-items-start plasmo-justify-center">
+                      <div>{tab.title}</div>
+                      <Tag color={tab.groupColor}>{tab.groupTitle}</Tag>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           )}
         </div>
         <div className="list-container">
