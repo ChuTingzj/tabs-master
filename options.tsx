@@ -1,9 +1,23 @@
-import { Button, Flex, Image, Layout, Menu, Splitter } from "antd"
-import type { MenuProps, MenuTheme } from "antd"
+import { QuestionCircleOutlined } from "@ant-design/icons"
+import { useAsyncEffect, useReactive } from "ahooks"
+import {
+  Flex,
+  Image,
+  Layout,
+  Menu,
+  message,
+  Splitter,
+  Switch,
+  Tooltip
+} from "antd"
+import type { MenuProps, MenuTheme, SwitchProps } from "antd"
 import Icon from "data-base64:~assets/icon.png"
 import CssText from "data-text:./options.less"
 import antdResetCssText from "data-text:antd/dist/reset.css"
+import { isEmpty } from "lodash-es"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
+
+import { sendToBackground } from "@plasmohq/messaging"
 
 import "~style.css"
 
@@ -11,15 +25,115 @@ import { ThemeProvider } from "~theme"
 
 const { Header, Footer, Sider, Content } = Layout
 
-const LanguageNode = () => {
+const ShortcutNode = () => {
+  const config = useReactive({
+    enableInputShortcut: false,
+    enableSwitchTabShortcut: false
+  })
+  const syncLatestConfig = async () => {
+    const { message } = await sendToBackground({
+      name: "storage",
+      body: {
+        key: `config`,
+        callbackName: "getStorage"
+      }
+    })
+    if (isEmpty(message)) {
+      await sendToBackground({
+        name: "storage",
+        body: {
+          key: `config`,
+          value: {
+            enableInputShortcut: true,
+            enableSwitchTabShortcut: true
+          },
+          callbackName: "setStorage"
+        }
+      })
+    } else {
+      config.enableInputShortcut = message.enableInputShortcut
+      config.enableSwitchTabShortcut = message.enableSwitchTabShortcut
+    }
+  }
+  useAsyncEffect(async () => {
+    await syncLatestConfig()
+  }, [])
+
+  const onEnableInputShortcutChange: SwitchProps["onChange"] = (checked) => {
+    config.enableInputShortcut = checked
+    if (checked) {
+      message.success(
+        "打开Tabs搜索框的快捷键启用成功，返回标签页重新刷新页面即可生效"
+      )
+    } else {
+      message.success(
+        "打开Tabs搜索框的快捷键禁用成功，返回标签页重新刷新页面即可生效"
+      )
+    }
+    sendToBackground({
+      name: "storage",
+      body: {
+        key: `config`,
+        value: Object.assign({}, config, {
+          enableInputShortcut: checked
+        }),
+        callbackName: "setStorage"
+      }
+    })
+  }
+
+  const onEnableSwitchTabShortcutChange: SwitchProps["onChange"] = (
+    checked
+  ) => {
+    config.enableSwitchTabShortcut = checked
+    if (checked) {
+      message.success(
+        "快速切换Tabs的快捷键启用成功，返回标签页重新刷新页面即可生效"
+      )
+    } else {
+      message.success(
+        "快速切换Tabs的快捷键禁用成功，返回标签页重新刷新页面即可生效"
+      )
+    }
+    sendToBackground({
+      name: "storage",
+      body: {
+        key: `config`,
+        value: Object.assign({}, config, {
+          enableSwitchTabShortcut: checked
+        }),
+        callbackName: "setStorage"
+      }
+    })
+  }
   return (
     <div className="plasmo-h-full plasmo-bg-white plasmo-p-6">
       <Flex justify="start">
-        <div className="header-title">{chrome.i18n.getMessage("Language")}</div>
+        <div className="header-title">{chrome.i18n.getMessage("Shortcut")}</div>
       </Flex>
       <div className="plasmo-p-6 plasmo-flex plasmo-justify-between plasmo-items-center">
-        <div className="header-sub-title ">修改语言</div>
-        <Button>点击去修改</Button>
+        <div className="plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-2">
+          <div className="header-sub-title ">启用打开Tabs搜索框的快捷键</div>
+          <Tooltip className="plasmo-cursor-pointer" title="Ctrl + Command + Z">
+            <QuestionCircleOutlined />
+          </Tooltip>
+        </div>
+        <Switch
+          value={config.enableInputShortcut}
+          onChange={onEnableInputShortcutChange}
+        />
+      </div>
+      <div className="plasmo-px-6 plasmo-flex plasmo-justify-between plasmo-items-center">
+        <div className="plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-2">
+          <div className="header-sub-title ">启用快速切换Tabs的快捷键</div>
+          <Tooltip className="plasmo-cursor-pointer" title="Alt + Tab">
+            <QuestionCircleOutlined />
+          </Tooltip>
+        </div>
+        <Switch
+          onChange={onEnableSwitchTabShortcutChange}
+          value={config.enableSwitchTabShortcut}
+        />
       </div>
     </div>
   )
@@ -27,9 +141,9 @@ const LanguageNode = () => {
 
 const items = [
   {
-    key: "Language",
-    label: chrome.i18n.getMessage("Language"),
-    node: <LanguageNode />
+    key: "Shortcut",
+    label: chrome.i18n.getMessage("Shortcut"),
+    node: <ShortcutNode />
   }
 ]
 
@@ -54,7 +168,7 @@ const contentStyle: React.CSSProperties = {
 }
 
 function OptionsIndex() {
-  const [current, setCurrent] = useState("Language")
+  const [current, setCurrent] = useState("Shortcut")
   const [theme, setTheme] = useState<MenuTheme>("light")
 
   const menuContent = useMemo(() => {

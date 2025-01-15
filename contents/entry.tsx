@@ -1,4 +1,5 @@
 import { StyleProvider } from "@ant-design/cssinjs"
+import { useAsyncEffect, useEventListener, useReactive } from "ahooks"
 import { FloatButton, Tooltip } from "antd"
 import antdResetCssText from "data-text:antd/dist/reset.css"
 import type {
@@ -32,22 +33,42 @@ export const config: PlasmoCSConfig = {
 }
 
 const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
+  const config = useReactive({
+    enableInputShortcut: false
+  })
+  useAsyncEffect(async () => {
+    const { message } = await sendToBackgroundViaRelay({
+      name: "storage",
+      body: {
+        key: `config`,
+        callbackName: "getStorage"
+      }
+    })
+    config.enableInputShortcut = message.enableInputShortcut
+  }, [])
+  useEventListener(
+    "keydown",
+    (e) => {
+      //监听用户按下ESC键，然后关闭组件
+      if (e.key === "Escape") {
+        onCloseGroupComponent()
+      }
+      //监听用户按下command + ctrl + z键，然后打开组件
+      if (e.key === "z" && e.metaKey && e.ctrlKey) {
+        if (config.enableInputShortcut) {
+          e.preventDefault()
+          onOpenGroupComponent()
+        }
+      }
+    },
+    { target: window }
+  )
   const onOpenGroupComponent = async () => {
     window.postMessage({ type: "openGroupComponent", visible: true }, "*")
   }
   const onCloseGroupComponent = async () => {
     window.postMessage({ type: "onCloseGroupComponent", visible: false }, "*")
   }
-  //监听用户按下ESC键，然后关闭组件
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      onCloseGroupComponent()
-    }
-    //监听用户按下command + ctrl + z键，然后打开组件
-    if (e.key === "z" && e.metaKey && e.ctrlKey) {
-      onOpenGroupComponent()
-    }
-  })
 
   return (
     <ThemeProvider>

@@ -1,7 +1,13 @@
 import { StyleProvider } from "@ant-design/cssinjs"
 import { PlusOutlined, SendOutlined, SettingOutlined } from "@ant-design/icons"
 import { Sender, Suggestion } from "@ant-design/x"
-import { useDocumentVisibility, useEventListener, useFocusWithin } from "ahooks"
+import {
+  useAsyncEffect,
+  useDocumentVisibility,
+  useEventListener,
+  useFocusWithin,
+  useReactive
+} from "ahooks"
 import {
   Alert,
   Avatar,
@@ -123,8 +129,22 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   const [recentlySwitchedTab, setRecentlySwitchedTab] = useState<Array<number>>(
     []
   )
+  const config = useReactive({
+    enableSwitchTabShortcut: false
+  })
   const [form] = Form.useForm<FieldType>()
   const visibility = useDocumentVisibility()
+
+  useAsyncEffect(async () => {
+    const { message } = await sendToBackgroundViaRelay({
+      name: "storage",
+      body: {
+        key: `config`,
+        callbackName: "getStorage"
+      }
+    })
+    config.enableSwitchTabShortcut = message.enableSwitchTabShortcut
+  }, [])
 
   const recentlySwitchedTabList = useMemo(() => {
     const recentlySwitchedTabClone = cloneDeep(
@@ -233,7 +253,11 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
         }
       }
       //监听用户按下Alt+Tab键
-      if (isKeyDown && event.altKey) {
+      if (
+        isKeyDown &&
+        event.code === "AltLeft" &&
+        config.enableSwitchTabShortcut
+      ) {
         event.preventDefault()
         setModal2Open(false)
         setVisible(false)
@@ -803,7 +827,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
                     }}>
                     <Image src={tab.favIconUrl} width={32} height={32} />
                     <div className="plasmo-flex plasmo-flex-col plasmo-items-start plasmo-justify-center">
-                      <div>{tab.title}</div>
+                      <div className="plasmo-text-base">{tab.title}</div>
                       <Tag color={tab.groupColor}>{tab.groupTitle}</Tag>
                     </div>
                   </div>
