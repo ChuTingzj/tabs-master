@@ -417,7 +417,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     </span>
   )
   const tagChild = tags.map(forMap)
-  const next = () => {
+  const resetTree = () => {
     setGData(() => {
       return [
         {
@@ -441,6 +441,9 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
         disabled: true
       })
     })
+  }
+  const next = () => {
+    resetTree()
     setCurrent(current + 1)
   }
   const prev = () => {
@@ -561,6 +564,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
           .finally(() => {
             getTabsAsync()
             setLoading(false)
+            form.resetFields()
             setTimeout(() => {
               setModal2Open(false)
               setSuccess(false)

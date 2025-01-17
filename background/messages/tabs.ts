@@ -1,4 +1,4 @@
-import { isEmpty } from "lodash-es"
+import { groupBy, isEmpty } from "lodash-es"
 
 import type { PlasmoMessaging } from "@plasmohq/messaging"
 
@@ -49,6 +49,27 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
         })
     )
   }
+  //快速分组：根据tab url快速创建新标签组
+  const createGroupQuickByUrl = (checkedList?: Array<number>) => {
+    const values = unGroupedTabs.filter((tab) => checkedList.includes(tab.id))
+    const valuesWithHostName = values.map((tab) => ({
+      ...tab,
+      hostname: new URL(tab.url).hostname
+    }))
+    const groupedValues = groupBy(valuesWithHostName, "hostname")
+    return Promise.all(
+      Object.keys(groupedValues).map((key) => {
+        const tabIds = groupedValues[key].map((tab) => tab.id)
+        const isCurrentTab = tabIds.includes(activeTab[0].id)
+        return chrome.tabs.group({ tabIds }).then((group) => {
+          return chrome.tabGroups.update(group, {
+            title: key,
+            collapsed: !isCurrentTab
+          })
+        })
+      })
+    )
+  }
   //自定义分组：根据提供的树形结构对未分组的标签页进行分组
   const groupTabsByTreeData = (
     treeData: Array<{
@@ -77,6 +98,12 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   }
   if (req.body && req.body.callbackName === "createGroupQuick") {
     const result = await createGroupQuick(req.body.checkedList)
+    res.send({
+      message: result
+    })
+  }
+  if (req.body && req.body.callbackName === "createGroupQuickByUrl") {
+    const result = await createGroupQuickByUrl(req.body.checkedList)
     res.send({
       message: result
     })
