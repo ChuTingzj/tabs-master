@@ -1,5 +1,10 @@
 import { StyleProvider } from "@ant-design/cssinjs"
-import { PlusOutlined, SendOutlined, SettingOutlined } from "@ant-design/icons"
+import {
+  PlusOutlined,
+  QuestionCircleOutlined,
+  SendOutlined,
+  SettingOutlined
+} from "@ant-design/icons"
 import { Sender, Suggestion } from "@ant-design/x"
 import {
   useAsyncEffect,
@@ -661,7 +666,26 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
       <StyleProvider container={document.getElementById(HOST_ID)?.shadowRoot}>
         <div className="input-container">
           <Modal
-            title="分组"
+            title={
+              <div className="plasmo-flex plasmo-items-center">
+                <div className="plasmo-text-lg">分组</div>
+                <div className="plasmo-flex plasmo-items-center plasmo-self-end">
+                  <Button type="link" onClick={getTabsAsync}>
+                    更新数据
+                  </Button>
+                  <Tooltip
+                    getPopupContainer={() =>
+                      document
+                        .getElementById(HOST_ID)
+                        ?.shadowRoot?.querySelector(".ant-modal-title")
+                    }
+                    className="plasmo-cursor-pointer"
+                    title="如果在下方没有找到你需要分组的标签页，请点击“更新数据”按钮，获取最新的标签页数据">
+                    <QuestionCircleOutlined />
+                  </Tooltip>
+                </div>
+              </div>
+            }
             width={"60%"}
             style={{ top: "24%" }}
             open={modal2Open}
