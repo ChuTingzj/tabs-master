@@ -11,6 +11,10 @@
     "message": "Language Settings",
     "description": "Language"
   },
+  "Shortcut": {
+    "message": "Shortcut Settings",
+    "description": "Shortcut"
+  },
   "TabsGroupManagement": {
     "message": "Tabs Group Management",
     "description": "Tabs Group Management"

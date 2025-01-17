@@ -11,6 +11,10 @@
     "message": "语言设置",
     "description": "Language"
   },
+  "Shortcut": {
+    "message": "快捷键设置",
+    "description": "Shortcut"
+  },
   "TabsGroupManagement": {
     "message": "标签页分组管理",
     "description": "Tabs Group Management"
