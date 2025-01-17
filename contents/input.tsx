@@ -385,6 +385,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
       }
     }
     setGData(data)
+    form.validateFields()
   }
 
   //自定义分组操作步骤一相关
@@ -564,7 +565,9 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
           .finally(() => {
             getTabsAsync()
             setLoading(false)
+            resetTree()
             form.resetFields()
+            setCurrent(0)
             setTimeout(() => {
               setModal2Open(false)
               setSuccess(false)
@@ -707,38 +710,41 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
                   rules={[
                     {
                       validator(rule, value, callback) {
-                        const canGroupedTabs = tabs.filter(
-                          (tab) => !tab.groupId
-                        )
-                        if (isEmpty(canGroupedTabs)) {
-                          return Promise.reject(
-                            new Error("当前没有可分组的标签页！")
+                        if (current === 1) {
+                          const canGroupedTabs = tabs.filter(
+                            (tab) => !tab.groupId
                           )
-                        }
-                        const treeData = gData[0].children
-                          .filter((group) => !isEmpty(group.children))
-                          .map((group) => {
-                            return {
-                              title: group.title,
-                              children: group.children.map((tab) => {
-                                return {
-                                  id: (tab.key as string).split("-")[1]
-                                }
-                              })
-                            }
-                          })
-                        if (isEmpty(treeData)) {
-                          return Promise.reject(
-                            new Error("还未创建分组或者未对标签页进行分类！")
+                          if (isEmpty(canGroupedTabs)) {
+                            return Promise.reject(
+                              new Error("当前没有可分组的标签页！")
+                            )
+                          }
+                          const treeData = gData[0]?.children
+                            .filter((group) => !isEmpty(group?.children))
+                            .map((group) => {
+                              return {
+                                title: group.title,
+                                children: group?.children.map((tab) => {
+                                  return {
+                                    id: (tab.key as string).split("-")[1]
+                                  }
+                                })
+                              }
+                            })
+                          if (isEmpty(treeData)) {
+                            return Promise.reject(
+                              new Error("还未创建分组或者未对标签页进行分类！")
+                            )
+                          }
+                          const existEmptyGroup = treeData.some((group) =>
+                            isEmpty(group?.children)
                           )
-                        }
-                        const existEmptyGroup = treeData.some((group) =>
-                          isEmpty(group.children)
-                        )
-                        if (existEmptyGroup) {
-                          return Promise.reject(
-                            new Error("存在未分配标签页的分组！")
-                          )
+                          if (existEmptyGroup) {
+                            return Promise.reject(
+                              new Error("存在未分配标签页的分组！")
+                            )
+                          }
+                          return Promise.resolve()
                         }
                         return Promise.resolve()
                       }
