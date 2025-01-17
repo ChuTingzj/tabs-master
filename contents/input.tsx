@@ -54,6 +54,8 @@ import { ThemeProvider } from "~theme"
 const HOST_ID = "engage-csui-input"
 const ALERT_MESSAGE_QUICK_GROUP =
   "根据标签的title进行快速分组，分组名称将默认采用标签的title，已经分组的tab则不会进行重新分组"
+const ALERT_MESSAGE_QUICK_GROUP_BY_URL =
+  "根据标签的url进行快速分组，分组名称将默认采用标签的一级域名，已经分组的tab则不会进行重新分组"
 const ALERT_MESSAGE_CUSTOM_GROUP =
   "对tab进行自定义分组，自定义分组名称，已经分组的tab则不会进行重新分组"
 
@@ -72,14 +74,25 @@ enum GROUP_TYPE {
   CUSTOM_GROUP = "custom_group"
 }
 
+enum QUICK_GROUP_STRATEGY {
+  TITLE = "title",
+  URL = "url"
+}
+
 type FieldType = {
   groupType?: GROUP_TYPE
   value?: unknown
+  quickGroupStrategy?: QUICK_GROUP_STRATEGY
 }
 
 const suggestions: SuggestionItems = [
   { label: "快速分组", value: "quick_group" },
   { label: "自定义分组", value: "custom_group" }
+]
+
+const quickGroupSuggestions: SuggestionItems = [
+  { label: "Title维度", value: "title" },
+  { label: "URL维度", value: "url" }
 ]
 
 const steps = [
@@ -121,7 +134,6 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   const [inputVisible, setInputVisible] = useState(false)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [checkedList, setCheckedList] = useState<number[]>([])
   const inputRef = useRef<InputRef>(null)
   const [currentIndex, setCurrentIndex] = useState(-1)
   const [currentRecentlySwitchedTabIndex, setCurrentRecentlySwitchedTabIndex] =
@@ -225,7 +237,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
       ?.shadowRoot?.querySelector(".ant-sender-input")
   )
 
-  //监听用户按下方向键
+  //监听用户按下指定的快捷键
   useEventListener(
     ["keydown", "keyup"],
     (event: KeyboardEvent) => {
@@ -286,26 +298,35 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   const tabsOptions = tabs
     .filter((tab) => !tab.groupId)
     .map((tab) => ({ label: tab.title, value: tab.tabId }))
+  const values = Form.useWatch((values) => values.value, form) as
+    | string[]
+    | undefined
   const indeterminate =
-    checkedList.length > 0 && checkedList.length < tabsOptions.length
-  const checkAll = tabsOptions.length === checkedList.length
-  const onChange = (list: number[]) => {
-    setCheckedList(list)
-  }
+    values?.length > 0 && values?.length < tabsOptions.length
+  const checkAll = values?.length === tabsOptions.length
   const onCheckAllChange: CheckboxProps["onChange"] = (e) => {
-    setCheckedList(e.target.checked ? tabsOptions.map((tab) => tab.value) : [])
+    form.setFieldValue(
+      "value",
+      e.target.checked ? tabsOptions.map((tab) => tab.value) : []
+    )
   }
 
   //表单相关
-  const groupTypeAlertInfo = Form.useWatch(
-    (values) =>
-      values.groupType === "quick_group"
-        ? ALERT_MESSAGE_QUICK_GROUP
-        : ALERT_MESSAGE_CUSTOM_GROUP,
-    form
-  )
+  const groupTypeAlertInfo = Form.useWatch((values) => {
+    if (values.groupType === "quick_group") {
+      if (values.quickGroupStrategy === "title") {
+        return ALERT_MESSAGE_QUICK_GROUP
+      }
+      return ALERT_MESSAGE_QUICK_GROUP_BY_URL
+    }
+    return ALERT_MESSAGE_CUSTOM_GROUP
+  }, form)
   const isCustomGroup = Form.useWatch(
     (values) => values.groupType === "custom_group",
+    form
+  )
+  const isQuickGroupByTitle = Form.useWatch(
+    (values) => values.quickGroupStrategy === "title",
     form
   )
 
@@ -514,7 +535,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
 
   //开始执行具体的分组策略
   const onRequestGroupStart = () => {
-    form.validateFields().then(() => {
+    form.validateFields().then((values) => {
       setLoading(true)
       if (isCustomGroup) {
         const treeData = gData[0].children
@@ -546,19 +567,20 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
             }, 1000)
           })
       } else {
-        console.log(checkedList, "front")
-
         sendToBackgroundViaRelay({
           name: "tabs",
           body: {
-            callbackName: "createGroupQuick",
-            checkedList
+            callbackName: isQuickGroupByTitle
+              ? "createGroupQuick"
+              : "createGroupQuickByUrl",
+            checkedList: values["value"]
           }
         })
           .then(() => setSuccess(true))
           .finally(() => {
             getTabsAsync()
             setLoading(false)
+            form.resetFields()
             setTimeout(() => {
               setModal2Open(false)
               setSuccess(false)
@@ -648,7 +670,10 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
             <Form
               form={form}
               name="tab_group"
-              initialValues={{ groupType: "quick_group" }}
+              initialValues={{
+                groupType: "quick_group",
+                quickGroupStrategy: "title"
+              }}
               autoComplete="off">
               <Form.Item label="分组方式">
                 <Flex vertical gap="small">
@@ -740,48 +765,50 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
                   ) : null}
                 </Form.Item>
               ) : (
-                <Form.Item
-                  label="执行快速分组的标签页"
-                  name="value"
-                  rules={[
-                    {
-                      validator(rule, value, callback) {
-                        const canGroupedTabs = tabs.filter(
-                          (tab) => !tab.groupId
-                        )
-                        if (isEmpty(canGroupedTabs)) {
-                          return Promise.reject(
-                            new Error("当前没有可分组的标签页！")
-                          )
-                        }
-                        if (isEmpty(checkedList)) {
-                          return Promise.reject(
-                            new Error("请选择需要分组的标签页！")
-                          )
-                        }
-                        return Promise.resolve()
-                      }
-                    }
-                  ]}>
-                  {!success ? (
-                    <Flex vertical>
-                      <Checkbox
-                        indeterminate={indeterminate}
-                        onChange={onCheckAllChange}
-                        checked={checkAll}>
-                        全选
-                      </Checkbox>
-                      <CheckboxGroup
-                        options={tabsOptions}
-                        value={checkedList}
-                        onChange={onChange}
-                      />
-                    </Flex>
-                  ) : null}
-                  {success ? (
-                    <Result status="success" title="分组完成!" />
-                  ) : null}
-                </Form.Item>
+                <>
+                  <Form.Item label="快速分组策略" name={"quickGroupStrategy"}>
+                    <Radio.Group options={quickGroupSuggestions} />
+                  </Form.Item>
+                  <Form.Item label="执行快速分组的标签页">
+                    {!success ? (
+                      <Flex vertical>
+                        <Checkbox
+                          indeterminate={indeterminate}
+                          onChange={onCheckAllChange}
+                          checked={checkAll}>
+                          全选
+                        </Checkbox>
+                        <Form.Item<FieldType>
+                          name="value"
+                          rules={[
+                            {
+                              validator(rule, value) {
+                                const canGroupedTabs = tabs.filter(
+                                  (tab) => !tab.groupId
+                                )
+                                if (isEmpty(canGroupedTabs)) {
+                                  return Promise.reject(
+                                    new Error("当前没有可分组的标签页！")
+                                  )
+                                }
+                                if (isEmpty(value)) {
+                                  return Promise.reject(
+                                    new Error("请选择需要分组的标签页！")
+                                  )
+                                }
+                                return Promise.resolve()
+                              }
+                            }
+                          ]}>
+                          <CheckboxGroup options={tabsOptions} />
+                        </Form.Item>
+                      </Flex>
+                    ) : null}
+                    {success ? (
+                      <Result status="success" title="分组完成!" />
+                    ) : null}
+                  </Form.Item>
+                </>
               )}
             </Form>
           </Modal>
