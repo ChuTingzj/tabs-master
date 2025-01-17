@@ -126,7 +126,7 @@ const ShortcutNode = () => {
       <div className="plasmo-px-6 plasmo-flex plasmo-justify-between plasmo-items-center">
         <div className="plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-2">
           <div className="header-sub-title ">启用快速切换Tabs的快捷键</div>
-          <Tooltip className="plasmo-cursor-pointer" title="Alt + Tab">
+          <Tooltip className="plasmo-cursor-pointer" title="Alt + Backquote">
             <QuestionCircleOutlined />
           </Tooltip>
         </div>

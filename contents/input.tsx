@@ -252,18 +252,13 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
           onNavigateToNewTab(currentTab.tabId)
         }
       }
-      //监听用户按下Alt+Tab键
-      if (
-        isKeyDown &&
-        event.code === "AltLeft" &&
-        config.enableSwitchTabShortcut
-      ) {
-        event.preventDefault()
+      //监听用户按下Alt+Backquote键
+      if (isKeyDown && event.altKey && config.enableSwitchTabShortcut) {
         setModal2Open(false)
         setVisible(false)
         setListVisible(false)
         setSwitchContainerVisible(true)
-        if (event.key === "Tab") {
+        if (event.code === "Backquote") {
           setCurrentRecentlySwitchedTabIndex((preState) => {
             const currentTab = nth(recentlySwitchedTabList, preState + 1)
             const index = !currentTab ? 0 : preState + 1
