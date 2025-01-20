@@ -8,6 +8,7 @@ import type {
   PlasmoGetShadowHostId
 } from "plasmo"
 import type { FC } from "react"
+import { useState } from "react"
 
 import { sendToBackgroundViaRelay } from "@plasmohq/messaging"
 
@@ -33,6 +34,7 @@ export const config: PlasmoCSConfig = {
 }
 
 const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
+  const [visible, setVisible] = useState(true)
   const config = useReactive({
     enableInputShortcut: false
   })
@@ -65,6 +67,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   )
   const onOpenGroupComponent = async () => {
     window.postMessage({ type: "openGroupComponent", visible: true }, "*")
+    setVisible(true)
   }
   const onCloseGroupComponent = async () => {
     window.postMessage({ type: "onCloseGroupComponent", visible: false }, "*")
@@ -73,24 +76,27 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   return (
     <ThemeProvider>
       <StyleProvider container={document.getElementById(HOST_ID).shadowRoot}>
-        <FloatButton.Group
-          trigger="hover"
-          type="default"
-          style={{ insetInlineEnd: 94 }}
-          icon={<LoveIcon />}>
-          <Tooltip
-            title="标签页分组管理"
-            color={"hotpink"}
-            key={"hotpink"}
-            placement="left"
-            getPopupContainer={() =>
-              document
-                .getElementById(HOST_ID)
-                .shadowRoot.querySelector("#plasmo-shadow-container")
-            }>
-            <FloatButton onClick={onOpenGroupComponent} icon={<TabIcon />} />
-          </Tooltip>
-        </FloatButton.Group>
+        {visible ? (
+          <FloatButton.Group
+            trigger="hover"
+            type="default"
+            style={{ insetInlineEnd: 94 }}
+            onClick={() => setVisible(false)}
+            icon={<LoveIcon />}>
+            <Tooltip
+              title="标签页分组管理"
+              color={"hotpink"}
+              key={"hotpink"}
+              placement="left"
+              getPopupContainer={() =>
+                document
+                  .getElementById(HOST_ID)
+                  .shadowRoot.querySelector("#plasmo-shadow-container")
+              }>
+              <FloatButton onClick={onOpenGroupComponent} icon={<TabIcon />} />
+            </Tooltip>
+          </FloatButton.Group>
+        ) : null}
       </StyleProvider>
     </ThemeProvider>
   )
