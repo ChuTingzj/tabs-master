@@ -123,6 +123,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
           url: tab.url,
           favIconUrl: tab.favIconUrl,
           tabId: tab.id,
+          lastAccessed: tab.lastAccessed,
           groupId: tab.groupId,
           groupTitle: group.title,
           groupColor: group.color
@@ -133,7 +134,8 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
       title: tab.title,
       tabId: tab.id,
       url: tab.url,
-      favIconUrl: tab.favIconUrl
+      favIconUrl: tab.favIconUrl,
+      lastAccessed: tab.lastAccessed
     })
   })
   //根据tab id使浏览器跳转到对应的tab
@@ -141,8 +143,15 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     const tab = await chrome.tabs.update(args.shift(), { active: true })
     return tab
   }
+  //根据tab id关闭标签页
+  const closeTab = async (...args: Array<number>) => {
+    await chrome.tabs.remove(args.shift())
+  }
   if (req.body && req.body.callbackName === "navigateToTabById") {
     await navigateToTabById(...req.body.arguments)
+  }
+  if (req.body && req.body.callbackName === "closeTab") {
+    await closeTab(...req.body.arguments)
   }
 
   const result: Array<{

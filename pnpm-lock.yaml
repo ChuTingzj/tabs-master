@@ -26,6 +26,9 @@ dependencies:
   antd:
     specifier: 5.22.5
     version: 5.22.5(react-dom@18.2.0)(react@18.2.0)
+  dayjs:
+    specifier: 1.11.13
+    version: 1.11.13
   lodash-es:
     specifier: 4.17.21
     version: 4.17.21
@@ -50,8 +53,8 @@ devDependencies:
     specifier: 1.49.1
     version: 1.49.1
   '@types/chrome':
-    specifier: 0.0.258
-    version: 0.0.258
+    specifier: 0.0.297
+    version: 0.0.297
   '@types/lodash-es':
     specifier: 4.17.12
     version: 4.17.12
@@ -3045,8 +3048,8 @@ packages:
     engines: {node: '>=10.13.0'}
     dev: false
 
-  /@types/chrome@0.0.258:
-    resolution: {integrity: sha1-gdx9q5CXhut//KdLbICp7LVUmmg=, tarball: http://r.npm.sankuai.com/@types/chrome/download/@types/chrome-0.0.258.tgz}
+  /@types/chrome@0.0.297:
+    resolution: {integrity: sha1-sLRRX9JNL6WFwCpscBtZa3Q25M8=, tarball: http://r.npm.sankuai.com/@types/chrome/download/@types/chrome-0.0.297.tgz}
     dependencies:
       '@types/filesystem': 0.0.36
       '@types/har-format': 1.2.16

@@ -139,11 +139,29 @@ const ShortcutNode = () => {
   )
 }
 
+const TabsCleanNode = () => {
+  return (
+    <div className="plasmo-h-full plasmo-bg-white plasmo-p-6">
+      <Flex justify="start">
+        <div className="header-title">
+          {chrome.i18n.getMessage("TabsClean")}
+        </div>
+      </Flex>
+      <div className="plasmo-p-6 plasmo-flex plasmo-justify-between plasmo-items-center"></div>
+    </div>
+  )
+}
+
 const items = [
   {
     key: "Shortcut",
     label: chrome.i18n.getMessage("Shortcut"),
     node: <ShortcutNode />
+  },
+  {
+    key: "TabsClean",
+    label: chrome.i18n.getMessage("TabsClean"),
+    node: <TabsCleanNode />
   }
 ]
 

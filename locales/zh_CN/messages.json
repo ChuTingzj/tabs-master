@@ -15,6 +15,10 @@
     "message": "快捷键设置",
     "description": "Shortcut"
   },
+  "TabsClean": {
+    "message": "标签清理设置",
+    "description": "TabsClean"
+  },
   "TabsGroupManagement": {
     "message": "标签页分组管理",
     "description": "Tabs Group Management"

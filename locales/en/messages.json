@@ -15,6 +15,10 @@
     "message": "Shortcut Settings",
     "description": "Shortcut"
   },
+  "TabsClean": {
+    "message": "TabsClean Settings",
+    "description": "TabsClean"
+  },
   "TabsGroupManagement": {
     "message": "Tabs Group Management",
     "description": "Tabs Group Management"
