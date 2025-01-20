@@ -1,8 +1,8 @@
 import { GithubOutlined, SettingOutlined } from "@ant-design/icons"
+import { useMount } from "ahooks"
 import { Button, Flex, Layout } from "antd"
 import CssText from "data-text:./popup.less"
 import antdResetCssText from "data-text:antd/dist/reset.css"
-import { useEffect } from "react"
 
 import { ThemeProvider } from "~theme"
 
@@ -37,14 +37,14 @@ const layoutStyle = {
 } satisfies React.CSSProperties
 
 function IndexPopup() {
-  useEffect(() => {
+  useMount(() => {
     const style = document.createElement("style")
     style.textContent = `${antdResetCssText}\n${CssText}`
     document.head.appendChild(style)
     return () => {
       document.head.removeChild(style)
     }
-  }, [])
+  })
   const openOptionsPage = () => {
     chrome.runtime.openOptionsPage()
   }

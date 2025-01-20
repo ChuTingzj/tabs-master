@@ -1,5 +1,5 @@
 import { QuestionCircleOutlined } from "@ant-design/icons"
-import { useAsyncEffect, useReactive } from "ahooks"
+import { useAsyncEffect, useMount, useReactive } from "ahooks"
 import {
   Flex,
   Image,
@@ -15,7 +15,7 @@ import Icon from "data-base64:~assets/icon.png"
 import CssText from "data-text:./options.less"
 import antdResetCssText from "data-text:antd/dist/reset.css"
 import { isEmpty } from "lodash-es"
-import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 
 import { sendToBackground } from "@plasmohq/messaging"
 
@@ -176,14 +176,14 @@ function OptionsIndex() {
       ?.node as unknown as ReactNode
   }, [current])
 
-  useEffect(() => {
+  useMount(() => {
     const style = document.createElement("style")
     style.textContent = `${antdResetCssText}\n${CssText}`
     document.head.appendChild(style)
     return () => {
       document.head.removeChild(style)
     }
-  }, [])
+  })
 
   const onClick: MenuProps["onClick"] = (e) => {
     console.log("click ", e)
