@@ -1,4 +1,5 @@
 import { QuestionCircleOutlined } from "@ant-design/icons"
+import Editor, { loader } from "@monaco-editor/react"
 import { useAsyncEffect, useMount, useReactive } from "ahooks"
 import {
   Flex,
@@ -15,6 +16,7 @@ import Icon from "data-base64:~assets/icon.png"
 import CssText from "data-text:./options.less"
 import antdResetCssText from "data-text:antd/dist/reset.css"
 import { isEmpty } from "lodash-es"
+import * as monaco from "monaco-editor"
 import { useMemo, useState, type ReactNode } from "react"
 
 import { sendToBackground } from "@plasmohq/messaging"
@@ -22,6 +24,8 @@ import { sendToBackground } from "@plasmohq/messaging"
 import "~style.css"
 
 import { ThemeProvider } from "~theme"
+
+loader.config({ monaco })
 
 const { Header, Footer, Sider, Content } = Layout
 
@@ -140,6 +144,21 @@ const ShortcutNode = () => {
 }
 
 const TabsCleanNode = () => {
+  const defaultStrategy = `
+  /**
+   * 判断当前标签页是否需要清理
+   * @param {chrome.tabs.Tab} tab 当前标签页 https://developer.chrome.com/docs/extensions/reference/api/tabs?hl=zh-cn#type-Tab
+   * @return {boolean} 是否需要清理
+  */
+  function cleanStrategy(tab) {
+    const currentTime = Date.now(); // 当前时间戳（毫秒）
+    const oneWeekInMilliseconds = 7 * 24 * 60 * 60 * 1000; // 一周的毫秒数
+    // 计算时间差
+    const timeDifference = currentTime - tab;
+    // 判断是否超过一周
+    return timeDifference >= oneWeekInMilliseconds;
+  }
+  `
   return (
     <div className="plasmo-h-full plasmo-bg-white plasmo-p-6">
       <Flex justify="start">
@@ -147,7 +166,22 @@ const TabsCleanNode = () => {
           {chrome.i18n.getMessage("TabsClean")}
         </div>
       </Flex>
-      <div className="plasmo-p-6 plasmo-flex plasmo-justify-between plasmo-items-center"></div>
+      <div className="plasmo-p-6 plasmo-flex plasmo-flex-col plasmo-gap-3">
+        <div className="plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-2">
+          <div className="header-sub-title ">编写你的清理策略</div>
+          <Tooltip
+            className="plasmo-cursor-pointer"
+            title="下方编写的策略将作为一键清理时的判断条件">
+            <QuestionCircleOutlined />
+          </Tooltip>
+        </div>
+        <Editor
+          theme="vs-dark"
+          height="50vh"
+          defaultLanguage="javascript"
+          defaultValue={defaultStrategy}
+        />
+      </div>
     </div>
   )
 }
@@ -200,6 +234,14 @@ function OptionsIndex() {
     document.head.appendChild(style)
     return () => {
       document.head.removeChild(style)
+    }
+  })
+
+  useMount(() => {
+    const search = location.search
+    if (search.includes("current")) {
+      const current = search.split("=")[1]
+      setCurrent(current)
     }
   })
 

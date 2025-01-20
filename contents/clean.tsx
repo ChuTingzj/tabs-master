@@ -75,6 +75,19 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     }).finally(() => getTabsAsync())
   }
 
+  //跳转到options页面
+  const onNavigateToOptions = () => {
+    sendToBackgroundViaRelay({
+      name: "tabs",
+      body: {
+        callbackName: "navigateToTabByUrl",
+        arguments: [
+          "chrome-extension://ofjefjnjipecobpbkehhebbfcfcpfabk/options.html?current=TabsClean"
+        ]
+      }
+    })
+  }
+
   //组件打开、关闭相关的事件监听
   useEventListener(
     "message",
@@ -102,6 +115,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
               一键清理
             </Button>
             <Button
+              onClick={onNavigateToOptions}
               type="primary"
               icon={<SettingOutlined style={{ color: "pink" }} />}>
               配置清理策略

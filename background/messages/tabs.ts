@@ -143,6 +143,11 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     const tab = await chrome.tabs.update(args.shift(), { active: true })
     return tab
   }
+  //根据tab url使浏览器跳转到对应的tab
+  const navigateToTabByUrl = async (...args: Array<string>) => {
+    const tab = await chrome.tabs.create({ url: args.shift() })
+    return tab
+  }
   //根据tab id关闭标签页
   const closeTab = async (...args: Array<number>) => {
     await chrome.tabs.remove(args.shift())
@@ -152,6 +157,9 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   }
   if (req.body && req.body.callbackName === "closeTab") {
     await closeTab(...req.body.arguments)
+  }
+  if (req.body && req.body.callbackName === "navigateToTabByUrl") {
+    await navigateToTabByUrl(...req.body.arguments)
   }
 
   const result: Array<{
