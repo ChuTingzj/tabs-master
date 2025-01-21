@@ -2,11 +2,13 @@ import { QuestionCircleOutlined } from "@ant-design/icons"
 import Editor, { loader } from "@monaco-editor/react"
 import { useAsyncEffect, useMount, useReactive } from "ahooks"
 import {
+  Button,
   Flex,
   Image,
   Layout,
   Menu,
   message,
+  Select,
   Splitter,
   Switch,
   Tooltip
@@ -28,6 +30,22 @@ import { ThemeProvider } from "~theme"
 loader.config({ monaco })
 
 const { Header, Footer, Sider, Content } = Layout
+
+const defaultStrategy = `
+  /**
+   * 判断当前标签页是否需要清理
+   * @param {chrome.tabs.Tab} tab 当前标签页 https://developer.chrome.com/docs/extensions/reference/api/tabs?hl=zh-cn#type-Tab
+   * @return {boolean} 是否需要清理
+  */
+  function main(tab) {
+    const currentTime = Date.now(); // 当前时间戳（毫秒）
+    const oneWeekInMilliseconds = 7 * 24 * 60 * 60 * 1000; // 一周的毫秒数
+    // 计算时间差
+    const timeDifference = currentTime - tab;
+    // 判断是否超过一周
+    return timeDifference >= oneWeekInMilliseconds;
+  }
+  `
 
 const ShortcutNode = () => {
   const config = useReactive({
@@ -144,21 +162,20 @@ const ShortcutNode = () => {
 }
 
 const TabsCleanNode = () => {
-  const defaultStrategy = `
-  /**
-   * 判断当前标签页是否需要清理
-   * @param {chrome.tabs.Tab} tab 当前标签页 https://developer.chrome.com/docs/extensions/reference/api/tabs?hl=zh-cn#type-Tab
-   * @return {boolean} 是否需要清理
-  */
-  function cleanStrategy(tab) {
-    const currentTime = Date.now(); // 当前时间戳（毫秒）
-    const oneWeekInMilliseconds = 7 * 24 * 60 * 60 * 1000; // 一周的毫秒数
-    // 计算时间差
-    const timeDifference = currentTime - tab;
-    // 判断是否超过一周
-    return timeDifference >= oneWeekInMilliseconds;
+  const [value, setValue] = useState(defaultStrategy)
+
+  const onSaveStrategy = () => {
+    // 保存策略
+    sendToBackground({
+      name: "storage",
+      body: {
+        key: `clean_strategy`,
+        value: value,
+        callbackName: "setStorage"
+      }
+    })
+    message.success("保存策略成功")
   }
-  `
   return (
     <div className="plasmo-h-full plasmo-bg-white plasmo-p-6">
       <Flex justify="start">
@@ -167,19 +184,45 @@ const TabsCleanNode = () => {
         </div>
       </Flex>
       <div className="plasmo-p-6 plasmo-flex plasmo-flex-col plasmo-gap-3">
-        <div className="plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-2">
-          <div className="header-sub-title ">编写你的清理策略</div>
-          <Tooltip
-            className="plasmo-cursor-pointer"
-            title="下方编写的策略将作为一键清理时的判断条件">
-            <QuestionCircleOutlined />
-          </Tooltip>
+        <div className="plasmo-flex plasmo-justify-between plasmo-items-center">
+          <div className="plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-2">
+            <div className="header-sub-title ">编写你的清理策略</div>
+            <Tooltip
+              className="plasmo-cursor-pointer"
+              title="下方编写的策略将作为一键清理时的判断条件">
+              <QuestionCircleOutlined />
+            </Tooltip>
+          </div>
+          <Button type="primary" onClick={onSaveStrategy}>
+            保存策略
+          </Button>
         </div>
         <Editor
           theme="vs-dark"
           height="50vh"
           defaultLanguage="javascript"
-          defaultValue={defaultStrategy}
+          onChange={(value) => setValue(value)}
+          value={value}
+        />
+      </div>
+      <div className="plasmo-px-6 plasmo-flex plasmo-justify-between plasmo-items-center">
+        <div className="plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-2">
+          <div className="header-sub-title ">是否开启定时清理</div>
+          <Tooltip
+            className="plasmo-cursor-pointer"
+            title="开启定时清理后将按您指定的时间自动根据策略清理标签页">
+            <QuestionCircleOutlined />
+          </Tooltip>
+        </div>
+        <Select
+          defaultValue="null"
+          style={{ width: 120 }}
+          options={[
+            { value: "null", label: "不开启" },
+            { value: "week", label: "每周" },
+            { value: "month", label: "每月" },
+            { value: "year", label: "每年" }
+          ]}
         />
       </div>
     </div>
