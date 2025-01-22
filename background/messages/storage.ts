@@ -5,7 +5,9 @@ export const storage = new Storage()
 
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   if (req.body && req.body.callbackName === "setStorage") {
-    await storage.set(req.body.key, req.body.value)
+    storage
+      .set(req.body.key, req.body.value)
+      .then(() => res.send({ message: req.body.value }))
   }
   if (req.body && req.body.callbackName === "getStorage") {
     const value = await storage.get(req.body.key)
