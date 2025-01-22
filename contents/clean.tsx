@@ -1,6 +1,6 @@
 import { StyleProvider } from "@ant-design/cssinjs"
 import { SettingOutlined } from "@ant-design/icons"
-import { useEventListener } from "ahooks"
+import { useEventListener, useMount, useReactive } from "ahooks"
 import { Avatar, Button, Flex, List, Tag } from "antd"
 import styleText from "data-text:./clean.less"
 import tailWindCssText from "data-text:~style.css"
@@ -39,6 +39,9 @@ export const getStyle = () => {
 const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   const [listVisible, setListVisible] = useState(false)
   const [tabs, setTabs] = useState([])
+  const config = useReactive({
+    cleanStrategy: null
+  })
 
   const tabsOrdered = useMemo(() => {
     //根据lastAccessed升序排序
@@ -88,6 +91,21 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     })
   }
 
+  //一键清理
+  const onCleanByStrategy = () => {
+    const tabsString = JSON.stringify(tabs)
+    const result = new Function(`
+      const tabs = JSON.parse('${tabsString}');
+      ${config.cleanStrategy};
+      const result = tabs.filter(tab => main(tab));
+      return result;
+    `)()
+    console.log(result)
+
+    // const ids = result.map((tab) => tab.tabId)
+    // ids.forEach((id) => onCloseTab(id))
+  }
+
   //组件打开、关闭相关的事件监听
   useEventListener(
     "message",
@@ -106,13 +124,32 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     getTabsAsync()
   }, [listVisible])
 
+  useMount(() => {
+    sendToBackgroundViaRelay({
+      name: "storage",
+      body: {
+        key: `config`,
+        callbackName: "getStorage"
+      }
+    }).then((res) => {
+      const { message } = res
+      config.cleanStrategy = message?.cleanStrategy
+    })
+  })
+
   return (
     <ThemeProvider>
       <StyleProvider container={document.getElementById(HOST_ID)?.shadowRoot}>
         {listVisible && (
           <div className="action-bar plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-4">
-            <Button type="primary" icon={<CleanIcon />}>
-              一键清理
+            <Button
+              disabled={!config?.cleanStrategy}
+              onClick={onCleanByStrategy}
+              type="primary"
+              icon={<CleanIcon />}>
+              {!config?.cleanStrategy
+                ? "请先配置清理策略，用于一键清理"
+                : "一键清理"}
             </Button>
             <Button
               onClick={onNavigateToOptions}

@@ -1,25 +1,29 @@
-import { QuestionCircleOutlined } from "@ant-design/icons"
+import { DoubleRightOutlined, QuestionCircleOutlined } from "@ant-design/icons"
 import Editor, { loader } from "@monaco-editor/react"
-import { useAsyncEffect, useMount, useReactive } from "ahooks"
+import { useAsyncEffect, useEventListener, useMount, useReactive } from "ahooks"
 import {
+  Avatar,
   Button,
   Flex,
   Image,
   Layout,
+  List,
   Menu,
   message,
   Select,
   Splitter,
   Switch,
+  Tag,
   Tooltip
 } from "antd"
-import type { MenuProps, MenuTheme, SwitchProps } from "antd"
+import type { MenuProps, MenuTheme, SelectProps, SwitchProps } from "antd"
 import Icon from "data-base64:~assets/icon.png"
 import CssText from "data-text:./options.less"
 import antdResetCssText from "data-text:antd/dist/reset.css"
+import dayjs from "dayjs"
 import { isEmpty } from "lodash-es"
 import * as monaco from "monaco-editor"
-import { useMemo, useState, type ReactNode } from "react"
+import { useMemo, useRef, useState, type ReactNode } from "react"
 
 import { sendToBackground } from "@plasmohq/messaging"
 
@@ -33,7 +37,8 @@ const { Header, Footer, Sider, Content } = Layout
 
 const defaultStrategy = `
   /**
-   * 判断当前标签页是否需要清理
+   * 对当前窗口所有标签页进行遍历，对每一个标签页调用下方的函数判断标签页是否需要清理
+   * 下方为一个示例函数，判断标签页是否超过一周未使用
    * @param {chrome.tabs.Tab} tab 当前标签页 https://developer.chrome.com/docs/extensions/reference/api/tabs?hl=zh-cn#type-Tab
    * @return {boolean} 是否需要清理
   */
@@ -47,6 +52,7 @@ const defaultStrategy = `
   }
   `
 
+// 快捷键设置
 const ShortcutNode = () => {
   const config = useReactive({
     enableInputShortcut: false,
@@ -83,15 +89,6 @@ const ShortcutNode = () => {
 
   const onEnableInputShortcutChange: SwitchProps["onChange"] = (checked) => {
     config.enableInputShortcut = checked
-    if (checked) {
-      message.success(
-        "打开Tabs搜索框的快捷键启用成功，返回标签页重新刷新页面即可生效"
-      )
-    } else {
-      message.success(
-        "打开Tabs搜索框的快捷键禁用成功，返回标签页重新刷新页面即可生效"
-      )
-    }
     sendToBackground({
       name: "storage",
       body: {
@@ -101,6 +98,16 @@ const ShortcutNode = () => {
         }),
         callbackName: "setStorage"
       }
+    }).then(() => {
+      if (checked) {
+        message.success(
+          "打开Tabs搜索框的快捷键启用成功，返回标签页重新刷新页面即可生效"
+        )
+      } else {
+        message.success(
+          "打开Tabs搜索框的快捷键禁用成功，返回标签页重新刷新页面即可生效"
+        )
+      }
     })
   }
 
@@ -108,15 +115,6 @@ const ShortcutNode = () => {
     checked
   ) => {
     config.enableSwitchTabShortcut = checked
-    if (checked) {
-      message.success(
-        "快速切换Tabs的快捷键启用成功，返回标签页重新刷新页面即可生效"
-      )
-    } else {
-      message.success(
-        "快速切换Tabs的快捷键禁用成功，返回标签页重新刷新页面即可生效"
-      )
-    }
     sendToBackground({
       name: "storage",
       body: {
@@ -125,6 +123,16 @@ const ShortcutNode = () => {
           enableSwitchTabShortcut: checked
         }),
         callbackName: "setStorage"
+      }
+    }).then(() => {
+      if (checked) {
+        message.success(
+          "快速切换Tabs的快捷键启用成功，返回标签页重新刷新页面即可生效"
+        )
+      } else {
+        message.success(
+          "快速切换Tabs的快捷键禁用成功，返回标签页重新刷新页面即可生效"
+        )
       }
     })
   }
@@ -161,23 +169,123 @@ const ShortcutNode = () => {
   )
 }
 
+// 标签页清理设置
 const TabsCleanNode = () => {
-  const [value, setValue] = useState(defaultStrategy)
+  const config = useReactive({
+    cleanTimeout: "null",
+    cleanStrategy: null
+  })
+  const [tabs, setTabs] = useState([])
+  const [appliedTabs, setAppliedTabs] = useState([])
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const tabsOrdered = useMemo(() => {
+    //根据lastAccessed升序排序
+    return tabs.sort((a, b) => a.lastAccessed - b.lastAccessed)
+  }, [tabs])
 
+  //获取tabs
+  const getTabsAsync = async () => {
+    const resp = await sendToBackground({
+      name: "tabs"
+    })
+    setTabs(resp.message)
+  }
+
+  // 保存清理策略
   const onSaveStrategy = () => {
-    // 保存策略
     sendToBackground({
       name: "storage",
       body: {
-        key: `clean_strategy`,
-        value: value,
-        callbackName: "setStorage"
+        key: `config`,
+        callbackName: "getStorage"
+      }
+    }).then((res) => {
+      const { message: originConfig } = res
+      sendToBackground({
+        name: "storage",
+        body: {
+          key: `config`,
+          value: Object.assign({}, originConfig, config),
+          callbackName: "setStorage"
+        }
+      }).then(() => message.success("保存策略成功"))
+    })
+  }
+
+  //运行清理策略
+  const onRunStrategy = () => {
+    sendToBackground({
+      name: "storage",
+      body: {
+        key: `config`,
+        callbackName: "getStorage"
+      }
+    }).then((res) => {
+      const { message: originConfig } = res
+      if (!originConfig.cleanStrategy) {
+        return message.error("请先保存策略")
+      }
+      const tabsString = JSON.stringify(tabs)
+      iframeRef.current.contentWindow.postMessage(
+        `
+        (function(){
+          const tabs = JSON.parse('${tabsString}');
+          ${config.cleanStrategy};
+          const result = tabs.filter(tab => !main(tab));
+          return result;
+        })()
+        `,
+        "*"
+      )
+    })
+  }
+
+  // 保存定时任务策略
+  const onCleanTimeoutChange: SelectProps["onChange"] = (value) => {
+    config.cleanTimeout = value
+    sendToBackground({
+      name: "storage",
+      body: {
+        key: `config`,
+        callbackName: "getStorage"
+      }
+    }).then((res) => {
+      const { message: originConfig } = res
+      sendToBackground({
+        name: "storage",
+        body: {
+          key: `config`,
+          value: Object.assign({}, originConfig, config),
+          callbackName: "setStorage"
+        }
+      }).then(() => message.success("保存定时任务成功"))
+    })
+  }
+
+  useMount(() => getTabsAsync())
+
+  useMount(() => {
+    sendToBackground({
+      name: "storage",
+      body: {
+        key: `config`,
+        callbackName: "getStorage"
+      }
+    }).then((res) => {
+      const { message: originConfig } = res
+      if (!isEmpty(originConfig)) {
+        config.cleanStrategy = originConfig.cleanStrategy
+        config.cleanTimeout = originConfig.cleanTimeout
       }
     })
-    message.success("保存策略成功")
-  }
+  })
+
+  useEventListener("message", (ev) => {
+    message.success("策略运行成功")
+    setAppliedTabs(JSON.parse(ev.data))
+  })
   return (
-    <div className="plasmo-h-full plasmo-bg-white plasmo-p-6">
+    <div className="plasmo-h-auto plasmo-bg-white plasmo-p-6">
       <Flex justify="start">
         <div className="header-title">
           {chrome.i18n.getMessage("TabsClean")}
@@ -198,12 +306,87 @@ const TabsCleanNode = () => {
           </Button>
         </div>
         <Editor
+          defaultValue={defaultStrategy}
           theme="vs-dark"
           height="50vh"
           defaultLanguage="javascript"
-          onChange={(value) => setValue(value)}
-          value={value}
+          onChange={(value) => (config.cleanStrategy = value)}
+          value={config.cleanStrategy}
         />
+      </div>
+      <div className="plasmo-p-6 plasmo-flex plasmo-flex-col plasmo-gap-3">
+        <div className="plasmo-flex plasmo-justify-between plasmo-items-center">
+          <div className="plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-2">
+            <div className="header-sub-title ">测试你的清理策略</div>
+            <Tooltip
+              className="plasmo-cursor-pointer"
+              title="左侧为当前窗口所有标签页，右侧为运行您保存的策略之后的结果">
+              <QuestionCircleOutlined />
+            </Tooltip>
+          </div>
+          <Button type="primary" onClick={onRunStrategy}>
+            运行策略
+          </Button>
+        </div>
+        <div className="plasmo-flex plasmo-gap-3 plasmo-justify-between plasmo-items-center">
+          <div className="list-container">
+            <List
+              itemLayout="horizontal"
+              size="small"
+              dataSource={tabsOrdered}
+              renderItem={(item, index) => (
+                <List.Item style={{ backgroundColor: item.backgroundColor }}>
+                  <List.Item.Meta
+                    avatar={<Avatar src={`${item.favIconUrl}`} />}
+                    title={<div className="list-item-title">{item.title}</div>}
+                    description={
+                      <Flex>
+                        {item.groupTitle ? (
+                          <Tag color={item.groupColor}>{item.groupTitle}</Tag>
+                        ) : null}
+                        <div>
+                          上次使用时间
+                          {dayjs(item.lastAccessed).format(
+                            "YYYY-MM-DD HH:mm:ss"
+                          )}
+                        </div>
+                      </Flex>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
+          </div>
+          <DoubleRightOutlined style={{ fontSize: 40, color: "pink" }} />
+          <div className="list-container">
+            <List
+              itemLayout="horizontal"
+              size="small"
+              dataSource={appliedTabs}
+              renderItem={(item, index) => (
+                <List.Item style={{ backgroundColor: item.backgroundColor }}>
+                  <List.Item.Meta
+                    avatar={<Avatar src={`${item.favIconUrl}`} />}
+                    title={<div className="list-item-title">{item.title}</div>}
+                    description={
+                      <Flex>
+                        {item.groupTitle ? (
+                          <Tag color={item.groupColor}>{item.groupTitle}</Tag>
+                        ) : null}
+                        <div>
+                          上次使用时间
+                          {dayjs(item.lastAccessed).format(
+                            "YYYY-MM-DD HH:mm:ss"
+                          )}
+                        </div>
+                      </Flex>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
+          </div>
+        </div>
       </div>
       <div className="plasmo-px-6 plasmo-flex plasmo-justify-between plasmo-items-center">
         <div className="plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-2">
@@ -223,8 +406,10 @@ const TabsCleanNode = () => {
             { value: "month", label: "每月" },
             { value: "year", label: "每年" }
           ]}
+          onChange={onCleanTimeoutChange}
         />
       </div>
+      <iframe className="plasmo-hidden" src="sandbox.html" ref={iframeRef} />
     </div>
   )
 }
@@ -265,6 +450,7 @@ const contentStyle: React.CSSProperties = {
 function OptionsIndex() {
   const [current, setCurrent] = useState("Shortcut")
   const [theme, setTheme] = useState<MenuTheme>("light")
+  const iframeRef = useRef<HTMLIFrameElement>(null)
 
   const menuContent = useMemo(() => {
     return items.find((item) => item.key === current)
@@ -291,10 +477,6 @@ function OptionsIndex() {
   const onClick: MenuProps["onClick"] = (e) => {
     console.log("click ", e)
     setCurrent(e.key)
-  }
-
-  const changeTheme = (value: boolean) => {
-    setTheme(value ? "dark" : "light")
   }
 
   return (
@@ -327,6 +509,7 @@ function OptionsIndex() {
             <Splitter.Panel>{menuContent}</Splitter.Panel>
           </Splitter>
         </Content>
+        <iframe className="plasmo-hidden" src="sandbox.html" ref={iframeRef} />
       </Layout>
     </ThemeProvider>
   )

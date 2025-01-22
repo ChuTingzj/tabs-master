@@ -12,3 +12,21 @@
   font-weight: bold;
   font-size: medium;
 }
+.list-container {
+  overscroll-behavior: contain;
+  width: 40%;
+  height: 350px;
+  background-image: linear-gradient(to bottom right, #ff61d2, #fe9090);
+  border-radius: 15px;
+  max-height: 350px;
+  overflow-y: auto;
+  scrollbar-color: pink transparent;
+  overflow-x: hidden;
+  .list-item-title {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
+    text-align: start;
+  }
+}
