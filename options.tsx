@@ -35,6 +35,12 @@ loader.config({ monaco })
 
 const { Header, Footer, Sider, Content } = Layout
 
+enum StrategyInterval {
+  WEEK = "604800000",
+  MONTH = "2629744000",
+  YEAR = "31557600000"
+}
+
 const defaultStrategy = `
   /**
    * 对当前窗口所有标签页进行遍历，对每一个标签页调用下方的函数判断标签页是否需要清理
@@ -173,7 +179,8 @@ const ShortcutNode = () => {
 const TabsCleanNode = () => {
   const config = useReactive({
     cleanTimeout: "null",
-    cleanStrategy: null
+    cleanStrategy: null,
+    lastTriggerTime: null
   })
   const [tabs, setTabs] = useState([])
   const [appliedTabs, setAppliedTabs] = useState([])
@@ -182,6 +189,10 @@ const TabsCleanNode = () => {
     //根据lastAccessed升序排序
     return tabs.sort((a, b) => a.lastAccessed - b.lastAccessed)
   }, [tabs])
+  const appliedTabsOrdered = useMemo(() => {
+    //根据lastAccessed升序排序
+    return appliedTabs.sort((a, b) => a.lastAccessed - b.lastAccessed)
+  }, [appliedTabs])
 
   //获取tabs
   const getTabsAsync = async () => {
@@ -201,6 +212,7 @@ const TabsCleanNode = () => {
       }
     }).then((res) => {
       const { message: originConfig } = res
+      config.lastTriggerTime = Date.now()
       sendToBackground({
         name: "storage",
         body: {
@@ -243,6 +255,7 @@ const TabsCleanNode = () => {
   // 保存定时任务策略
   const onCleanTimeoutChange: SelectProps["onChange"] = (value) => {
     config.cleanTimeout = value
+    config.lastTriggerTime = Date.now()
     sendToBackground({
       name: "storage",
       body: {
@@ -258,7 +271,23 @@ const TabsCleanNode = () => {
           value: Object.assign({}, originConfig, config),
           callbackName: "setStorage"
         }
-      }).then(() => message.success("保存定时任务成功"))
+      }).then(() => {
+        if (config.cleanTimeout === StrategyInterval.WEEK) {
+          message.success(
+            "保存定时任务成功，每周清理任务已开启，将在一周之后自动运行"
+          )
+        } else if (config.cleanTimeout === StrategyInterval.MONTH) {
+          message.success(
+            "保存定时任务成功，每月清理任务已开启，将在一个月之后自动运行"
+          )
+        } else if (config.cleanTimeout === StrategyInterval.YEAR) {
+          message.success(
+            "保存定时任务成功，每年清理任务已开启，将在一年之后自动运行"
+          )
+        } else {
+          message.success("关闭定时任务成功")
+        }
+      })
     })
   }
 
@@ -281,7 +310,6 @@ const TabsCleanNode = () => {
   })
 
   useEventListener("message", (ev) => {
-    message.success("策略运行成功")
     setAppliedTabs(JSON.parse(ev.data))
   })
   return (
@@ -362,7 +390,7 @@ const TabsCleanNode = () => {
             <List
               itemLayout="horizontal"
               size="small"
-              dataSource={appliedTabs}
+              dataSource={appliedTabsOrdered}
               renderItem={(item, index) => (
                 <List.Item style={{ backgroundColor: item.backgroundColor }}>
                   <List.Item.Meta
@@ -400,11 +428,12 @@ const TabsCleanNode = () => {
         <Select
           defaultValue="null"
           style={{ width: 120 }}
+          value={config.cleanTimeout}
           options={[
             { value: "null", label: "不开启" },
-            { value: "week", label: "每周" },
-            { value: "month", label: "每月" },
-            { value: "year", label: "每年" }
+            { value: "604800000", label: "每周" },
+            { value: "2629744000", label: "每月" },
+            { value: "31557600000", label: "每年" }
           ]}
           onChange={onCleanTimeoutChange}
         />

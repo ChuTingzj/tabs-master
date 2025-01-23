@@ -1,6 +1,12 @@
 import { StyleProvider } from "@ant-design/cssinjs"
 import { SettingOutlined } from "@ant-design/icons"
-import { useEventListener, useMount, useReactive } from "ahooks"
+import {
+  useEventListener,
+  useInterval,
+  useMount,
+  useReactive,
+  useUnmount
+} from "ahooks"
 import { Avatar, Button, Flex, List, Tag } from "antd"
 import styleText from "data-text:./clean.less"
 import tailWindCssText from "data-text:~style.css"
@@ -40,13 +46,44 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   const [listVisible, setListVisible] = useState(false)
   const [tabs, setTabs] = useState([])
   const config = useReactive({
-    cleanStrategy: null
+    cleanStrategy: null,
+    cleanTimeout: "null",
+    lastTriggerTime: null
   })
 
   const tabsOrdered = useMemo(() => {
     //根据lastAccessed升序排序
     return tabs.sort((a, b) => a.lastAccessed - b.lastAccessed)
   }, [tabs])
+
+  const clear = useInterval(() => {
+    sendToBackgroundViaRelay({
+      name: "storage",
+      body: {
+        key: `config`,
+        callbackName: "getStorage"
+      }
+    }).then((res) => {
+      const { message: originConfig } = res
+      const { cleanStrategy, lastTriggerTime, cleanTimeout } = originConfig
+      if (!Number.isNaN(Number(cleanTimeout)) && cleanStrategy) {
+        const interval = Date.now() - lastTriggerTime
+        if (interval > Number(cleanTimeout)) {
+          onCleanByStrategy()
+          sendToBackgroundViaRelay({
+            name: "storage",
+            body: {
+              key: `config`,
+              value: Object.assign({}, originConfig, {
+                lastTriggerTime: Date.now()
+              }),
+              callbackName: "setStorage"
+            }
+          })
+        }
+      }
+    })
+  }, 10000)
 
   //获取tabs
   const getTabsAsync = async () => {
@@ -100,10 +137,8 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
       const result = tabs.filter(tab => main(tab));
       return result;
     `)()
-    console.log(result)
-
-    // const ids = result.map((tab) => tab.tabId)
-    // ids.forEach((id) => onCloseTab(id))
+    const ids = result.map((tab) => tab.tabId)
+    ids.forEach((id) => onCloseTab(id))
   }
 
   //组件打开、关闭相关的事件监听
@@ -134,7 +169,13 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     }).then((res) => {
       const { message } = res
       config.cleanStrategy = message?.cleanStrategy
+      config.cleanTimeout = message?.cleanTimeout
+      config.lastTriggerTime = message?.lastTriggerTime
     })
+  })
+
+  useUnmount(() => {
+    clear()
   })
 
   return (
