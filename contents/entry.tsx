@@ -1,5 +1,5 @@
 import { StyleProvider } from "@ant-design/cssinjs"
-import { CloseOutlined } from "@ant-design/icons"
+import { CloseOutlined, OpenAIOutlined } from "@ant-design/icons"
 import { useAsyncEffect, useEventListener, useReactive } from "ahooks"
 import { FloatButton, Tooltip } from "antd"
 import antdResetCssText from "data-text:antd/dist/reset.css"
@@ -16,6 +16,7 @@ import { sendToBackgroundViaRelay } from "@plasmohq/messaging"
 import { ThemeProvider } from "~theme"
 
 import { CleanIcon } from "../icon/clean"
+import { DeepSeekIcon } from "../icon/deepseek"
 import { LoveIcon } from "../icon/heart"
 import { TabIcon } from "../icon/tab"
 
@@ -57,6 +58,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
       if (e.key === "Escape") {
         onCloseGroupComponent()
         onCloseCleanComponent()
+        onCloseDeepSeekComponent()
       }
       //监听用户按下command + ctrl + z键，然后打开组件
       if (e.key === "z" && e.metaKey && e.ctrlKey) {
@@ -70,18 +72,31 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   )
   const onOpenGroupComponent = async () => {
     onCloseCleanComponent()
+    onCloseDeepSeekComponent()
     window.postMessage({ type: "openGroupComponent", visible: true }, "*")
     setVisible(true)
   }
   const onOpenCleanComponent = async () => {
     onCloseGroupComponent()
+    onCloseDeepSeekComponent()
     window.postMessage({ type: "openCleanComponent", visible: true }, "*")
+  }
+  const onOpenDeepSeekComponent = async () => {
+    onCloseGroupComponent()
+    onCloseCleanComponent()
+    window.postMessage({ type: "openDeepSeekComponent", visible: true }, "*")
   }
   const onCloseCleanComponent = async () => {
     window.postMessage({ type: "onCloseCleanComponent", visible: false }, "*")
   }
   const onCloseGroupComponent = async () => {
     window.postMessage({ type: "onCloseGroupComponent", visible: false }, "*")
+  }
+  const onCloseDeepSeekComponent = async () => {
+    window.postMessage(
+      { type: "onCloseDeepSeekComponent", visible: false },
+      "*"
+    )
   }
 
   return (
@@ -120,6 +135,21 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
               <FloatButton
                 onClick={onOpenCleanComponent}
                 icon={<CleanIcon />}
+              />
+            </Tooltip>
+            <Tooltip
+              title="DeepSeek LLM"
+              color={"hotpink"}
+              key={"DeepSeek"}
+              placement="left"
+              getPopupContainer={() =>
+                document
+                  .getElementById(HOST_ID)
+                  .shadowRoot.querySelector("#plasmo-shadow-container")
+              }>
+              <FloatButton
+                onClick={onOpenDeepSeekComponent}
+                icon={<OpenAIOutlined style={{ color: "pink" }} />}
               />
             </Tooltip>
           </FloatButton.Group>
