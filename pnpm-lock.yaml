@@ -38,6 +38,9 @@ dependencies:
   lodash-es:
     specifier: 4.17.21
     version: 4.17.21
+  markdown-it:
+    specifier: 14.1.0
+    version: 14.1.0
   monaco-editor:
     specifier: 0.52.2
     version: 0.52.2
@@ -4954,6 +4957,12 @@ packages:
   /lines-and-columns@1.2.4:
     resolution: {integrity: sha1-7KKE910pZQeTCdwK2SVauy68FjI=, tarball: http://r.npm.sankuai.com/lines-and-columns/download/lines-and-columns-1.2.4.tgz}
 
+  /linkify-it@5.0.0:
+    resolution: {integrity: sha1-nvI4v6bccL2Of5VytS02mvVptCE=, tarball: http://r.npm.sankuai.com/linkify-it/download/linkify-it-5.0.0.tgz}
+    dependencies:
+      uc.micro: 2.1.0
+    dev: false
+
   /lmdb@2.5.2:
     resolution: {integrity: sha1-N+KKn7Q0BfTcSMRM7A4ToUxKb/E=, tarball: http://r.npm.sankuai.com/lmdb/download/lmdb-2.5.2.tgz}
     requiresBuild: true
@@ -5069,6 +5078,18 @@ packages:
     dev: false
     optional: true
 
+  /markdown-it@14.1.0:
+    resolution: {integrity: sha1-PDxZkog8Yz20cUzLTXtZNdmLfUU=, tarball: http://r.npm.sankuai.com/markdown-it/download/markdown-it-14.1.0.tgz}
+    hasBin: true
+    dependencies:
+      argparse: 2.0.1
+      entities: 4.5.0
+      linkify-it: 5.0.0
+      mdurl: 2.0.0
+      punycode.js: 2.3.1
+      uc.micro: 2.1.0
+    dev: false
+
   /math-intrinsics@1.1.0:
     resolution: {integrity: sha1-oN10voHiqlwvJ+Zc4oNgXuTit/k=, tarball: http://r.npm.sankuai.com/math-intrinsics/download/math-intrinsics-1.1.0.tgz}
     engines: {node: '>= 0.4'}
@@ -5080,6 +5101,10 @@ packages:
 
   /mdn-data@2.0.30:
     resolution: {integrity: sha1-zk32+Ar2z74hjs1cVSuhPE36CMw=, tarball: http://r.npm.sankuai.com/mdn-data/download/mdn-data-2.0.30.tgz}
+    dev: false
+
+  /mdurl@2.0.0:
+    resolution: {integrity: sha1-gGduwEMwJd0+F+6YPQ/o3loiN+A=, tarball: http://r.npm.sankuai.com/mdurl/download/mdurl-2.0.0.tgz}
     dev: false
 
   /merge-stream@2.0.0:
@@ -5695,6 +5720,11 @@ packages:
     dependencies:
       end-of-stream: 1.4.4
       once: 1.4.0
+    dev: false
+
+  /punycode.js@2.3.1:
+    resolution: {integrity: sha1-a1PlatdViCNOefSv+pCXLH3Yzbc=, tarball: http://r.npm.sankuai.com/punycode.js/download/punycode.js-2.3.1.tgz}
+    engines: {node: '>=6'}
     dev: false
 
   /punycode@2.3.1:
@@ -6962,6 +6992,10 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
     dev: true
+
+  /uc.micro@2.1.0:
+    resolution: {integrity: sha1-+NP30OxMPeo1p+PI76TLi0XJ5+4=, tarball: http://r.npm.sankuai.com/uc.micro/download/uc.micro-2.1.0.tgz}
+    dev: false
 
   /undici-types@5.26.5:
     resolution: {integrity: sha1-vNU5iT0AtW6WT9JlekhmsiGmVhc=, tarball: http://r.npm.sankuai.com/undici-types/download/undici-types-5.26.5.tgz}

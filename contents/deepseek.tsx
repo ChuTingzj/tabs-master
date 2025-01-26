@@ -7,14 +7,19 @@ import {
   useXAgent,
   useXChat
 } from "@ant-design/x"
-import type { ConversationsProps, SenderProps } from "@ant-design/x"
+import type {
+  BubbleProps,
+  ConversationsProps,
+  SenderProps
+} from "@ant-design/x"
 import { useEventListener } from "ahooks"
-import { Button } from "antd"
+import { Button, Typography } from "antd"
 import type { GetProp } from "antd"
 import styleText from "data-text:./deepseek.less"
 import tailWindCssText from "data-text:~style.css"
 import antdResetCssText from "data-text:antd/dist/reset.css"
 import { isEmpty } from "lodash-es"
+import markdownit from "markdown-it"
 import type {
   PlasmoCSConfig,
   PlasmoCSUIProps,
@@ -28,6 +33,15 @@ import { ThemeProvider } from "~theme"
 import { DeepSeekIcon } from "../icon/deepseek"
 
 const HOST_ID = "engage-csui-deepseek"
+
+const md = markdownit({ html: true, breaks: true })
+
+const renderMarkdown: BubbleProps["messageRender"] = (content) => (
+  <Typography>
+    {/* biome-ignore lint/security/noDangerouslySetInnerHtml: used in demo */}
+    <div dangerouslySetInnerHTML={{ __html: md.render(content) }} />
+  </Typography>
+)
 
 /**
  * 🔔 Please replace the BASE_URL, PATH, MODEL, API_KEY with your own values.
@@ -124,7 +138,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   })
 
   // Chat messages
-  const { onRequest, parsedMessages } = useXChat({
+  const { onRequest, parsedMessages, setMessages } = useXChat({
     agent,
     parser(message) {
       if (Array.isArray(message)) {
@@ -140,13 +154,15 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
         key: id,
         loading: status === "loading",
         role: status === "local" ? "local" : "assistant",
-        content: message.content
+        content: message.content,
+        messageRender: renderMarkdown
       }
     })
     return result
   }, [parsedMessages])
 
   const onSubmit: SenderProps["onSubmit"] = (nextContent) => {
+    setMessages(parsedMessages)
     onRequest({ content: nextContent, role: "user" })
     setValue("")
   }
@@ -182,7 +198,11 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
               ) : (
                 <Bubble.List
                   roles={roles}
-                  style={{ maxHeight: "64vh", width: "100%" }}
+                  style={{
+                    maxHeight: "64vh",
+                    width: "100%",
+                    scrollbarColor: "pink transparent"
+                  }}
                   items={formattedMessage}
                 />
               )}

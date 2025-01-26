@@ -21,6 +21,7 @@
     "dayjs": "1.11.13",
     "localforage": "1.10.0",
     "lodash-es": "4.17.21",
+    "markdown-it": "14.1.0",
     "monaco-editor": "0.52.2",
     "plasmo": "0.89.4",
     "rc-tween-one": "3.0.6",
