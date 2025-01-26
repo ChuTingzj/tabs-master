@@ -22,6 +22,11 @@
   <img width="1740" alt="截屏2025-01-14 10 51 35" src="https://github.com/user-attachments/assets/5a26d2ec-fce6-49c0-bbd1-b1825a94e1a7" />
 
 - **Tab Cleaner**: Easily clean tabs that are no longer needed and support customize your clean strategy.
+  ![image](https://github.com/user-attachments/assets/9a367281-689c-4c5a-8d63-acd035547471)
+  ![image](https://github.com/user-attachments/assets/dee95c7c-1cbd-4750-810a-b6d7e95d22f6)
+
+  
+
 
 ## How to contribute
 
