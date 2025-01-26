@@ -216,9 +216,10 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
               value={value}
               placeholder="给DeepSeek发送消息"
               actions={(_, info) => {
-                const { SendButton, LoadingButton, ClearButton } =
-                  info.components
-                return <SendButton type="default" />
+                const { SendButton } = info.components
+                return (
+                  <SendButton loading={agent.isRequesting()} type="default" />
+                )
               }}
               onChange={setValue}
               onSubmit={onSubmit}
