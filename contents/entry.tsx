@@ -137,7 +137,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
                 icon={<CleanIcon />}
               />
             </Tooltip>
-            <Tooltip
+            {/* <Tooltip
               title="DeepSeek LLM"
               color={"hotpink"}
               key={"DeepSeek"}
@@ -151,7 +151,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
                 onClick={onOpenDeepSeekComponent}
                 icon={<OpenAIOutlined style={{ color: "pink" }} />}
               />
-            </Tooltip>
+            </Tooltip> */}
           </FloatButton.Group>
         ) : null}
       </StyleProvider>
