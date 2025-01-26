@@ -10,6 +10,10 @@
 <br/>
 <br/>
 
+<p align="center">
+  English | <a href="/README.zh-CN.md">简体中文</a>
+</p>
+
 ## Features
 
 - **Tab Group & Tabs Search**: Create and manage tab groups to keep your tabs organized.
