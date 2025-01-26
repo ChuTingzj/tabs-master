@@ -2,9 +2,9 @@
 
 ## 功能特性
 
-**标签组与搜索管理**：创建和管理标签组，保持标签页井井有条
+**标签分组与搜索管理**：创建和管理标签分组，保持标签页井井有条
 
-- 使用快捷键 Ctrl+Command+Z 呼出标签组和搜索面板，按 Esc 键关闭
+- 使用快捷键 Ctrl+Command+Z 呼出标签分组和搜索面板组件，按 Esc 键关闭
 - <img width="1742" alt="截屏2025-01-14 10 36 42" src="https://github.com/user-attachments/assets/8a2c7cea-46af-4d8e-a192-8002edf48a1a" />
 
    ![image](https://github.com/user-attachments/assets/fa4c74f3-602e-42f6-89d2-d4cc24a39690)
