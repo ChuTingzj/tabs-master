@@ -538,7 +538,10 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
         callbackName: "getStorage"
       }
     })
-    setRecentlySwitchedTab(recentlySwitchedTabs)
+    const latestTabIds = resp.message.map((tab) => tab.tabId)
+    setRecentlySwitchedTab(
+      recentlySwitchedTabs.filter((id) => latestTabIds.includes(id))
+    )
     setTabs(resp.message)
   }
 
