@@ -32,6 +32,9 @@ dependencies:
   dayjs:
     specifier: 1.11.13
     version: 1.11.13
+  localforage:
+    specifier: 1.10.0
+    version: 1.10.0
   lodash-es:
     specifier: 4.17.21
     version: 4.17.21
@@ -4496,6 +4499,10 @@ packages:
     dev: false
     optional: true
 
+  /immediate@3.0.6:
+    resolution: {integrity: sha1-nbHb0Pr43m++D13V5Wu2BigN5ps=, tarball: http://r.npm.sankuai.com/immediate/download/immediate-3.0.6.tgz}
+    dev: false
+
   /immutable@5.0.3:
     resolution: {integrity: sha1-qgN+IxPqe11ADNkpj6FOQEyTPbE=, tarball: http://r.npm.sankuai.com/immutable/download/immutable-5.0.3.tgz}
     dev: false
@@ -4727,6 +4734,12 @@ packages:
       mime: 1.6.0
       needle: 3.3.1
       source-map: 0.6.1
+    dev: false
+
+  /lie@3.1.1:
+    resolution: {integrity: sha1-mkNrLMd0bKWd56QfpGmz77dr2H4=, tarball: http://r.npm.sankuai.com/lie/download/lie-3.1.1.tgz}
+    dependencies:
+      immediate: 3.0.6
     dev: false
 
   /lightningcss-darwin-arm64@1.21.8:
@@ -4981,6 +4994,12 @@ packages:
   /load-tsconfig@0.2.5:
     resolution: {integrity: sha1-RTuM2JYb+5Et6nfrbBaP6Myj06E=, tarball: http://r.npm.sankuai.com/load-tsconfig/download/load-tsconfig-0.2.5.tgz}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    dev: false
+
+  /localforage@1.10.0:
+    resolution: {integrity: sha1-XEZdxfYrKAfDqEwMahsbMhJ4HdQ=, tarball: http://r.npm.sankuai.com/localforage/download/localforage-1.10.0.tgz}
+    dependencies:
+      lie: 3.1.1
     dev: false
 
   /locate-character@3.0.0:
