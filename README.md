@@ -4,7 +4,6 @@
 
 <p align="center"><img alt="Chrome Web Store" src="https://img.shields.io/badge/Chrome-141e24.svg?&style=for-the-badge&logo=google-chrome&logoColor=white"> <img alt="Firefox Add-ons" src="https://img.shields.io/badge/Firefox-141e24.svg?&style=for-the-badge&logo=firefox-browser&logoColor=white"> <img alt="Apple App Store" src="https://img.shields.io/badge/Safari-141e24.svg?&style=for-the-badge&logo=safari&logoColor=white">  <img alt="Edge Addons" src="https://img.shields.io/badge/Edge-141e24.svg?&style=for-the-badge&logo=microsoft-edge&logoColor=white"> </p>
 
-
 <h2 align="center">Tabs Master</h2>
 <br/>
 <p align="center">Tabs Master is an <strong>open-source</strong> MIT-licensed <strong>browser extension</strong> designed to manage the browser tabs.
@@ -13,14 +12,16 @@
 
 ## Features
 
-- **Tab Groups & Tabs Search**: Create and manage tab groups to keep your tabs organized.
+- **Tab Group & Tabs Search**: Create and manage tab groups to keep your tabs organized.
   - can use `Ctrl+Command+Z` to show the `group` and `search` component and use `Esc` to hide them
    <img width="1742" alt="截屏2025-01-14 10 36 42" src="https://github.com/user-attachments/assets/8a2c7cea-46af-4d8e-a192-8002edf48a1a" />
-   
+
    ![image](https://github.com/user-attachments/assets/fa4c74f3-602e-42f6-89d2-d4cc24a39690)
 - **Tab Switch**: Quickly search for tabs and switch between them.
   - can use `Alt` to show the `switch` component that display your recently used tabs, and use `Alt+Backquote` to switch between these tabs
   <img width="1740" alt="截屏2025-01-14 10 51 35" src="https://github.com/user-attachments/assets/5a26d2ec-fce6-49c0-bbd1-b1825a94e1a7" />
+
+- **Tab Cleaner**: Easily clean tabs that are no longer needed and support customize your clean strategy.
 
 ## How to contribute
 
