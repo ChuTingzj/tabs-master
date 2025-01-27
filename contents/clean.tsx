@@ -64,7 +64,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
         callbackName: "getStorage"
       }
     }).then((res) => {
-      const { message: originConfig } = res
+      const { message: originConfig = {} } = res
       const { cleanStrategy, lastTriggerTime, cleanTimeout } = originConfig
       if (!Number.isNaN(Number(cleanTimeout)) && cleanStrategy) {
         const interval = Date.now() - lastTriggerTime

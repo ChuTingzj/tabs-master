@@ -61,8 +61,8 @@ const defaultStrategy = `
 // 快捷键设置
 const ShortcutNode = () => {
   const config = useReactive({
-    enableInputShortcut: false,
-    enableSwitchTabShortcut: false
+    enableInputShortcut: true,
+    enableSwitchTabShortcut: true
   })
   const syncLatestConfig = async () => {
     const { message } = await sendToBackground({

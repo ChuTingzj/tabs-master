@@ -160,7 +160,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
         callbackName: "getStorage"
       }
     })
-    config.enableSwitchTabShortcut = message.enableSwitchTabShortcut
+    config.enableSwitchTabShortcut = message?.enableSwitchTabShortcut
   }, [])
 
   const recentlySwitchedTabList = useMemo(() => {
@@ -540,7 +540,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     })
     const latestTabIds = resp.message.map((tab) => tab.tabId)
     setRecentlySwitchedTab(
-      recentlySwitchedTabs.filter((id) => latestTabIds.includes(id))
+      recentlySwitchedTabs?.filter((id) => latestTabIds.includes(id)) ?? []
     )
     setTabs(resp.message)
   }

@@ -49,7 +49,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
         callbackName: "getStorage"
       }
     })
-    config.enableInputShortcut = message.enableInputShortcut
+    config.enableInputShortcut = message?.enableInputShortcut
   }, [])
   useEventListener(
     "keydown",
