@@ -61,8 +61,8 @@ const defaultStrategy = `
 // 快捷键设置
 const ShortcutNode = () => {
   const config = useReactive({
-    enableInputShortcut: true,
-    enableSwitchTabShortcut: true
+    enableInputShortcut: false,
+    enableSwitchTabShortcut: false
   })
   const syncLatestConfig = async () => {
     const { message } = await sendToBackground({
@@ -72,19 +72,7 @@ const ShortcutNode = () => {
         callbackName: "getStorage"
       }
     })
-    if (isEmpty(message)) {
-      await sendToBackground({
-        name: "storage",
-        body: {
-          key: `config`,
-          value: {
-            enableInputShortcut: true,
-            enableSwitchTabShortcut: true
-          },
-          callbackName: "setStorage"
-        }
-      })
-    } else {
+    if (!isEmpty(message)) {
       config.enableInputShortcut = message.enableInputShortcut
       config.enableSwitchTabShortcut = message.enableSwitchTabShortcut
     }
