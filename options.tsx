@@ -52,7 +52,7 @@ const defaultStrategy = `
     const currentTime = Date.now(); // 当前时间戳（毫秒）
     const oneWeekInMilliseconds = 7 * 24 * 60 * 60 * 1000; // 一周的毫秒数
     // 计算时间差
-    const timeDifference = currentTime - tab;
+    const timeDifference = currentTime - tab.lastAccessed;
     // 判断是否超过一周
     return timeDifference >= oneWeekInMilliseconds;
   }
