@@ -304,7 +304,9 @@ const TabsCleanNode = () => {
       const { message: originConfig } = res
       if (!isEmpty(originConfig)) {
         config.cleanStrategy = originConfig.cleanStrategy
-        config.cleanTimeout = originConfig.cleanTimeout
+        if (!Number.isNaN(Number(originConfig.cleanTimeout))) {
+          config.cleanTimeout = originConfig.cleanTimeout
+        }
       }
     })
   })
