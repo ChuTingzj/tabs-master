@@ -182,7 +182,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     <ThemeProvider>
       <StyleProvider container={document.getElementById(HOST_ID)?.shadowRoot}>
         {listVisible && (
-          <div className="action-bar plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-4">
+          <div className="action-bar plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-[16px]">
             <Button
               disabled={!config?.cleanStrategy}
               onClick={onCleanByStrategy}

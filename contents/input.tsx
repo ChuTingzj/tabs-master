@@ -499,7 +499,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
       return (
         <Spin spinning={loading}>
           <div
-            className="plasmo-grid plasmo-grid-cols-1 plasmo-gap-2"
+            className="plasmo-grid plasmo-grid-cols-1 plasmo-gap-[8px]"
             style={{
               maxHeight: "27vh",
               overflowY: "auto",
@@ -671,7 +671,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
           <Modal
             title={
               <div className="plasmo-flex plasmo-items-center">
-                <div className="plasmo-text-lg">分组</div>
+                <div className="plasmo-text-[18px]">分组</div>
                 <div className="plasmo-flex plasmo-items-center plasmo-self-end">
                   <Button type="link" onClick={getTabsAsync}>
                     更新数据
@@ -880,13 +880,13 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
                 return (
                   <div
                     key={tab.tabId}
-                    className="plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-5 plasmo-p-2 plasmo-rounded-2xl"
+                    className="plasmo-flex plasmo-justify-start plasmo-items-center plasmo-gap-[20px] plasmo-p-[8px] plasmo-rounded-2xl"
                     style={{
                       backgroundColor: tab.backgroundColor
                     }}>
                     <Image src={tab.favIconUrl} width={32} height={32} />
                     <div className="plasmo-flex plasmo-flex-col plasmo-items-start plasmo-justify-center">
-                      <div className="plasmo-text-base">{tab.title}</div>
+                      <div className="plasmo-text-[16px]">{tab.title}</div>
                       <Tag color={tab.groupColor}>{tab.groupTitle}</Tag>
                     </div>
                   </div>
